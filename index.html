@@ -308,6 +308,15 @@ body.zo #m .card>i,body.zo #m .card>b,body.zo #ov .card>i,body.zo #ov .card>b{vi
 /* bandeau opaque : rien ne passe en dessous */
 header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;z-index:8;box-shadow:0 6px 14px -6px #000}
 .dxs:not(.open) .dxb{display:none}
+
+/* cartes spéciales : spectaculaires, chromatiques, chromatiques full art */
+.hl.k-amazing{opacity:.85;mix-blend-mode:color-dodge;filter:saturate(1.3);background:repeating-linear-gradient(125deg,#ff4fd8aa 0 5%,#4fe0ffaa 5% 10%,#ffe84faa 10% 15%,#6fff8aaa 15% 20%);background-size:220% 220%;background-position:var(--mx) var(--my)}
+.hl.k-amazing::after{mix-blend-mode:overlay;opacity:.7}
+.gr.k-amazing,.gr.k-shiny,.gr.k-shinyfa{display:none}
+.hl.k-shiny{-webkit-mask:linear-gradient(#000,#000) 50% 19.5%/85% 41% no-repeat;mask:linear-gradient(#000,#000) 50% 19.5%/85% 41% no-repeat;mix-blend-mode:screen;opacity:1;filter:none;background:linear-gradient(115deg,transparent 18%,#ffd98a88 38%,#fff0b8dd 50%,#9fe0ff88 62%,transparent 82%),radial-gradient(circle at var(--mx) var(--my),#ffffff77,transparent 45%);background-size:300% 300%,100% 100%;background-position:var(--mx) var(--my),0 0}
+.hl.k-shinyfa{opacity:1;filter:saturate(1.8) brightness(1.2);background:linear-gradient(115deg,transparent 8%,#ffcf4a 22%,#ff5fd0 36%,#5fe8ff 50%,#fff06a 64%,#7affa0 78%,transparent 92%);background-size:240% 240%;background-position:var(--mx) var(--my)}
+.stars.win{inset:11.5% 7.5% 47.5% 7.5%}
+.stars.win u{text-shadow:0 0 2px #fff,0 0 8px #9fe0ff,0 0 14px #ffd86b}
 </style>
 </head>
 <body>
@@ -712,8 +721,15 @@ function fitArt(im){
  if(ox>1){add(0,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'0 0');add(ox+dw-1,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'100% 0')}
 }
 const isSec=c=>{const so=typeof sets!=='undefined'&&sets.find(x=>x.id===c.set),off=so&&so.cardCount&&so.cardCount.official,n=parseInt(c.num,10);return !!(off&&n>off)};
-const effT=c=>{if(c.t===0)return 0;const t=c.rar?tier({rarity:c.rar}):c.t;return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
-const holoKind=c=>{const t=effT(c),r=String(c.rar||'').toLowerCase();
+const effBase=c=>{if(c.t===0)return 0;const t=c.rar?tier({rarity:c.rar}):c.t;return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
+// cartes à part : « Amazing Rare » (spectaculaire), chromatiques (shiny) et chromatiques full art
+const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
+ if(/amazing|spectacul|extraordin|fantastiq|incroyable|[ée]tonnant/.test(r))return'amazing';
+ if(/shiny|chromatique|brillant/.test(r))return/\b(v|vmax|vstar|gx|ex)\b|ultra|full|illus|secret|rainbow|gold/.test(r)?'shinyfa':'shiny';
+ return''};
+const effT=c=>{const b=effBase(c),sp=special(c);return sp==='amazing'?Math.max(b,6):sp==='shinyfa'?8:sp==='shiny'?5:b};
+const RL=c=>{const sp=special(c);return sp==='shiny'?'Chromatique':sp==='shinyfa'?'Chromatique full art':sp==='amazing'?'Rare spectaculaire':TN[effT(c)]};
+const holoKind=c=>{const sp=special(c);if(sp)return sp;const t=effT(c),r=String(c.rar||'').toLowerCase();
  if(t<=2)return c.rev?'rev':'';
  if(t===3)return /holo/.test(r)?'holo':(c.rev?'rev':'');
  if(t===4)return 'fa';
@@ -722,7 +738,8 @@ const holoKind=c=>{const t=effT(c),r=String(c.rar||'').toLowerCase();
  if(t===8)return /rainbow|arc-en/.test(r)?'rainbow':'gold';
  return ''};
 const STARS=t=>{const P=[[14,12],[78,9],[48,24],[88,38],[22,46],[62,55],[10,70],[80,78],[40,86],[56,40],[30,28],[92,62]];return '<i class="sw"></i><b class="stars">'+P.slice(0,t>=8?12:8).map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.37%1.6).toFixed(2)}s;--z:${(8+i%4*4+(t>=8?4:0))}">✦</u>`).join('')+'</b>'};
-const holoHTML=c=>{const k=holoKind(c),t=effT(c);return `<i class="bd s${t}"></i>`+(t>=6?'<i class="sk"></i>':'')+(t>=7?STARS(t):'')+(k?`<i class="hl k-${k}"></i><i class="gr k-${k}"></i>`:'')};
+const STARSW=()=>{const P=[[12,18],[70,10],[38,42],[86,52],[20,72],[58,80],[90,24],[48,16],[30,60],[76,70]];return '<b class="stars win">'+P.map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.41%1.8).toFixed(2)}s;--z:${(8+i%3*4)}">✦</u>`).join('')+'</b>'};
+const holoHTML=c=>{const k=holoKind(c),t=effT(c);return `<i class="bd s${t}"></i>`+(t>=6&&k!=='amazing'?'<i class="sk"></i>':'')+(k==='shiny'?STARSW():'')+(t>=7?STARS(t):'')+(k?`<i class="hl k-${k}"></i><i class="gr k-${k}"></i>`:'')};
 // la lumière suit le doigt / la souris (et la carte s'incline) ; au repos, tout glisse tout seul
 (()=>{const idle=new WeakMap();
  document.addEventListener('pointermove',e=>{const el=e.target.closest&&e.target.closest('.stage,.card');if(!el||el.id==='zs')return;const r=el.getBoundingClientRect();if(!r.width)return;
@@ -852,10 +869,10 @@ async function openPack(id,idx,v=0,art=''){
  const sObj=sets[idx]||{id,name:d.name};
  const show=()=>{
   if(i>=pack.length){
-   ov.innerHTML=`<h2>${d.name}</h2><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${c.t}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
+   ov.innerHTML=`<h2>${d.name}</h2><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
-  const c=pack[i],rest=pack.slice(i,i+4);pre(i+1);
-  const tagUp=`${c.name} · ${TN[c.t]}${news[i]?' · Nouveau !':''}`;
+  const c=Object.assign({},pack[i]);c.t=effT(c);const rest=pack.slice(i,i+4);pre(i+1);
+  const tagUp=`${c.name} · ${RL(c)}${news[i]?' · Nouveau !':''}`;
   ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
   <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>`;
   if(up)revealFx(c.t);
@@ -919,7 +936,7 @@ function zoomCard(keys,k){
  const draw=()=>{
   const c=S.cards[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${TN[t]} · ×${c.n}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
+  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
   const mv=e=>{const r=zs.getBoundingClientRect(),x=Math.min(1.2,Math.max(-.2,(e.clientX-r.left)/r.width)),y=Math.min(1.2,Math.max(-.2,(e.clientY-r.top)/r.height));
    zs.style.setProperty('--tx',((x-.5)*70).toFixed(1)+'deg');zs.style.setProperty('--ty',((.5-y)*55).toFixed(1)+'deg');zs.style.setProperty('--mx',(x*100).toFixed(1)+'%');zs.style.setProperty('--my',(y*100).toFixed(1)+'%')};
