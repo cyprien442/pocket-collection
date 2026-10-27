@@ -268,6 +268,7 @@ header{background:#0d1322cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:b
 
 .zx{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;font-size:18px}
 .zn{display:flex;align-items:center;gap:16px;color:var(--mut)}
+.ct{margin-top:6px;background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
 .zn button{width:44px;height:44px;border-radius:50%;font-size:24px;line-height:1}
 .zn button:disabled{opacity:.3}
 .card[data-k]{cursor:zoom-in}
@@ -610,13 +611,20 @@ function rare(T,E){
  const pool=E.holo>=1||!n.length?(h.length?h:all):(!h.length||Math.random()>E.holo?n:h);
  return pool.length?pick(pool):draw(T,3);
 }
+// Compositions propres à certaines extensions (en plus du profil de l'époque) : c communes, u peu communes, e énergies
+const PACKOV={base1:{c:4,e:2},base4:{c:4,e:2},ecard1:{c:5,u:2,e:0},ecard2:{c:5,u:2,e:0},ecard3:{c:5,u:2,e:0}};
+// « Card trick » (cardcollector.co.uk) : rang de la rare en partant du fond du paquet ; 0 = pas de méthode
+const TRICK_SERIE={base:3,gym:3,neo:3,ex:3,dp:3,pl:3,hgss:3,col:3,bw:3,xy:3,sm:4,swsh:4,sv:1};
+function trickN(id,serie){if(lang==='ja')return 0;const n=nid(id),sr=String(serie||'').toLowerCase();
+ if(n==='base6'||/^(swshp|svp|smp|xyp|bwp|dpp|hgssp|basep|mep|me\d)/.test(n))return 0;
+ if(n==='ecard2')return 2;if(sr==='ecard')return 3;return TRICK_SERIE[sr]||0}
 function roll(d,id){
  const shiny=SHINY.has(nid(id)),shPool=shiny?d.cards.filter(c=>c.sh&&!c.sub):[],T={},subs=d.cards.filter(c=>c.sub),SU=subOf(id);d.cards.filter(c=>!c.sub&&!(shiny&&c.sh)).forEach(c=>(T[c.t]=T[c.t]||[]).push(c));
- const E=eraOf(d,id),out=[];
+ const E={...eraOf(d,id),...(PACKOV[nid(id)]||{})},out=[];
  const add=(f,n,rev)=>{for(let i=0;i<n;i++){let c,k=0;do{c=f()}while(out.some(o=>o.id===c.id)&&++k<8);out.push({...c,rev})}};
  const cu=()=>Math.random()<.4?draw(T,2):draw(T,1);
  add(()=>draw(T,1),E.c);add(()=>draw(T,2),E.u);
- if(E.e)add(()=>draw(T,0),1);
+ if(E.e)add(()=>draw(T,0),E.e);
  if(E.k==='sv'){
   if(shPool.length){
    add(()=>rollTier(T,E.P,[8,7,6,5,4])||rare(T,E),1);     // emplacement rare (toutes les raretés spéciales)
@@ -634,7 +642,11 @@ function roll(d,id){
   }
   add(()=>rollTier(T,E.P,[8,6,4])||rare(T,E),1);
  }
- return out.sort((a,b)=>a.t-b.t); // les plus rares en dernier
+ const sd=out.sort((a,b)=>a.t-b.t),N=trickN(id,d.serie);
+ // ordre réel d'un paquet : la rare n'est pas la dernière carte mais la N-ième en partant du fond (le « card trick » la remet en dernier)
+ sd.hit=sd.length-1;sd.tn=N;
+ if(N>1&&sd.length>N){const r=sd.pop();sd.splice(sd.length-(N-1),0,r);sd.hit=sd.length-N}
+ return sd;
 }
 function store(cards,id,d,idx){
  S.sets[`${lang}:${id}`]={name:d.name,total:d.cards.length,idx};
@@ -897,7 +909,7 @@ async function openPack(id,idx,v=0,art=''){
  ov.innerHTML='<div>Préparation du booster…</div><div class="prog"><i id="pb"></i></div>';
  let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(String(e&&e.message||e))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
  if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(JSON.stringify(window._dbg||{}))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
- S.stock.n--;const pack=roll(d,id),news=store(pack,id,d,idx);S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
+ S.stock.n--;let pack=roll(d,id),news=store(pack,id,d,idx),trick=false;S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
  let i=0,up=false;
  const sObj=sets[idx]||{id,name:d.name};
  const show=()=>{
@@ -906,8 +918,10 @@ async function openPack(id,idx,v=0,art=''){
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
   const c=Object.assign({},pack[i]);c.t=effT(c);const rest=pack.slice(i,i+4);pre(i+1);
   const tagUp=`${c.name} · ${RL(c)}${news[i]?' · Nouveau !':''}`;
+  const ctb=pack.tn>1&&!trick&&i===0?'<button id="ct" class="ct" type="button">Card trick</button>':'';
   ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
-  <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>`;
+  <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>${ctb}${trick&&i===0?'<div class="tag" style="font-size:13px;color:var(--mut)">Card trick appliqué : la rare arrive en dernier</div>':''}`;
+  const ctn=$('#ct');if(ctn)ctn.onclick=e=>{e.stopPropagation();const h=pack.hit,pm=[...pack.keys()],np=pm.slice(h+1).concat(pm.slice(0,h+1));pack=np.map(x=>pack[x]);news=np.map(x=>news[x]);trick=true;pre(0);show()};
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
   const next=dir=>{if(busy)return;busy=true;top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
