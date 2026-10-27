@@ -317,6 +317,7 @@ header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;bac
 .hl.k-shinyfa{opacity:1;filter:saturate(1.8) brightness(1.2);background:linear-gradient(115deg,transparent 8%,#ffcf4a 22%,#ff5fd0 36%,#5fe8ff 50%,#fff06a 64%,#7affa0 78%,transparent 92%);background-size:240% 240%;background-position:var(--mx) var(--my)}
 .stars.win{inset:11.5% 7.5% 47.5% 7.5%}
 .stars.win u{text-shadow:0 0 2px #fff,0 0 8px #9fe0ff,0 0 14px #ffd86b}
+.zr{font-size:12px;color:var(--mut);margin-top:-6px;text-align:center}
 </style>
 </head>
 <body>
@@ -724,7 +725,7 @@ const isSec=c=>{const so=typeof sets!=='undefined'&&sets.find(x=>x.id===c.set),o
 const effBase=c=>{if(c.t===0)return 0;const t=c.rar?tier({rarity:c.rar}):c.t;return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
 // cartes à part : « Amazing Rare » (spectaculaire), chromatiques (shiny) et chromatiques full art
 const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
- if(/amazing|spectacul|extraordin|fantastiq|incroyable|[ée]tonnant/.test(r))return'amazing';
+ if(/amazing|spectacul|extraordin|fantastiq|incroyable|merveill|[ée]tonnant|sublime|magnifi/.test(r))return'amazing';
  if(/shiny|chromatique|brillant/.test(r))return/\b(v|vmax|vstar|gx|ex)\b|ultra|full|illus|secret|rainbow|gold/.test(r)?'shinyfa':'shiny';
  return''};
 const effT=c=>{const b=effBase(c),sp=special(c);return sp==='amazing'?Math.max(b,6):sp==='shinyfa'?8:sp==='shiny'?5:b};
@@ -936,7 +937,7 @@ function zoomCard(keys,k){
  const draw=()=>{
   const c=S.cards[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
+  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
   const mv=e=>{const r=zs.getBoundingClientRect(),x=Math.min(1.2,Math.max(-.2,(e.clientX-r.left)/r.width)),y=Math.min(1.2,Math.max(-.2,(e.clientY-r.top)/r.height));
    zs.style.setProperty('--tx',((x-.5)*70).toFixed(1)+'deg');zs.style.setProperty('--ty',((.5-y)*55).toFixed(1)+'deg');zs.style.setProperty('--mx',(x*100).toFixed(1)+'%');zs.style.setProperty('--my',(y*100).toFixed(1)+'%')};
