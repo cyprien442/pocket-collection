@@ -410,8 +410,10 @@ async function loadSet(id,prog){
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  let enx=[];
  if(!extra&&lang!=='en'){try{
-  const en=await j(`${API}/en/sets/${id}`),have=new Set((main.s.cards||[]).map(c=>String(c.localId)));
-  const miss=(en.cards||[]).filter(c=>c.image&&!have.has(String(c.localId)));
+  const have=new Set((main.s.cards||[]).map(c=>String(c.localId)));let enc=[];
+  try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
+  if(subOf(id)){for(const sid of subOf(id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
+  const seen=new Set(),miss=enc.filter(c=>c.image&&!have.has(String(c.localId))&&!seen.has(c.id)&&seen.add(c.id));
   for(let i=0;i<miss.length;i+=12){
    const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='';try{const d=await j(`${API}/en/cards/${c.id}`);rar=d.rarity||''}catch(e){}
     return{id:c.id,num:c.localId,name:c.name,img:c.image,t:/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3,rar,sub:1,sh:0,en:1}}));
@@ -912,7 +914,10 @@ function dex(tabs,all){
   try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
   if(!lst){
    if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));break}catch(e){}}}
-   if((!lst||!lst.length)&&lang!=='en'){try{const[fr,en]=await Promise.all([j(`${API}/${lang}/sets/${so.id}`),j(`${API}/en/sets/${so.id}`)]);const have=new Set((fr.cards||[]).map(c=>String(c.localId)));lst=(en.cards||[]).filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId))}catch(e){}}
+   if((!lst||!lst.length)&&lang!=='en'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
+    try{enc=(await j(`${API}/en/sets/${so.id}`)).cards||[]}catch(e){}
+    if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
+    lst=[...new Set(enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId)))]}catch(e){}}
    if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
   }
   if(lst)lst=lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>tot(so));
