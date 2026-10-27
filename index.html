@@ -391,7 +391,7 @@ function tier(c){
  return 3;
 }
 async function loadSet(id,prog){
- const k=`rc6:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc7:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
