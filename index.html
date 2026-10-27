@@ -392,13 +392,13 @@ function tier(c){
 }
 // cartes françaises des sous-séries absentes de l'API : noms et images de Poképédia (pages « Nom (Extension SV001) »)
 async function frWikiCards(setName){
- const k='fw1:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
+ const k='fw2:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
  if(hit)return hit;
  const norm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
  const out={};let cont={};
  for(let n=0;n<5;n++){
   const r=await wk({action:'query',generator:'links',titles:setName,gpllimit:'500',gplnamespace:'0',prop:'pageimages',piprop:'thumbnail',pithumbsize:'500',...cont});
-  Object.values((r.query||{}).pages||{}).forEach(pg=>{const m=/^(.+) \((.+) ([A-Z]{0,3}\d+)\)$/.exec(pg.title||'');if(m&&norm(m[2])===norm(setName)&&pg.thumbnail&&pg.thumbnail.source)out[m[3].toUpperCase()]={name:m[1],img:pg.thumbnail.source}});
+  Object.values((r.query||{}).pages||{}).forEach(pg=>{const m=/^(.+) \((.+) ([A-Z]{0,3}\d+)\)$/.exec(pg.title||'');if(m&&norm(m[2])===norm(setName)&&pg.thumbnail&&pg.thumbnail.source)out[m[3].toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')]={name:m[1],img:pg.thumbnail.source}});
   if(r.continue)cont=r.continue;else break;
  }
  if(Object.keys(out).length){try{localStorage.setItem(k,JSON.stringify(out))}catch(e){}}
@@ -433,7 +433,7 @@ async function loadSet(id,prog){
     return{id:c.id,num:c.localId,name:c.name,img:c.image,t,rar,sub:isSub?1:0,sh:0,en:1}}));
    enx.push(...p);
   }}catch(e){enx=[]}}
- if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase()];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
+ if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
