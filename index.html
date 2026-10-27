@@ -989,7 +989,25 @@ function dex(tabs,all){
  $('#cl').querySelectorAll('.dxs').forEach(sec=>{sec.querySelector('.dxh').onclick=()=>toggle(sec);if(open.has(sec.dataset.id))toggle(sec,true)});
  if(fs){const sec=$('#cl').querySelector('.dxs');if(sec)sec.scrollIntoView({block:'start'})}
 }
+// met à jour les anciennes cartes de la collection : récupère leur rareté exacte (pour les effets) une seule fois
+let rfBusy=false;
+async function refreshRarities(){
+ if(rfBusy)return;
+ const todo=Object.values(S.cards).filter(c=>!c.rar&&!c.rf&&c.t!==0);
+ if(!todo.length)return;
+ rfBusy=true;let n=0;
+ const one=async c=>{
+  for(const l of [c.lang,'en']){
+   try{const d=await j(`${API}/${l}/cards/${c.id}`);c.rar=d.rarity||'';c.t=c.t===0?0:tier(d);if(d.category==='Energy'&&d.energyType==='Normal')c.t=0;n++;return}catch(e){}
+  }
+  c.rf=1; // introuvable : on ne réessaie pas
+ };
+ for(let i=0;i<todo.length;i+=6)await Promise.all(todo.slice(i,i+6).map(one));
+ rfBusy=false;
+ if(n){persist();try{push()}catch(e){}if(view==='c')collection()}
+}
 function collection(){
+ if(!window._rfd){window._rfd=1;refreshRarities()}
  setTimeout(()=>{const cl=$('#cl');if(cl)cl.onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...cl.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)}},0);
  const m=$('#m'),all=Object.values(S.cards).filter(c=>c.lang===lang);
  const tabs=`<div class="seg"><button data-v="mine"${(window._cv||'mine')==='mine'?' class="on"':''}>Mes cartes</button><button data-v="dex"${window._cv==='dex'?' class="on"':''}>Pokédex</button></div>`;
