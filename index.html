@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pocket Collection</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d1322">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -199,9 +205,9 @@ header{background:#0d1322cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:b
 @keyframes bsp{to{--ang:360deg}}
 .stage.deck{--c:var(--bc);outline:none}
 .dk{position:absolute;inset:0}
-.dk.f1{animation:df1 .24s ease-in forwards}.dk.f2{animation:df2 .24s ease-out}
-@keyframes df1{from{clip-path:inset(-24px)}to{clip-path:inset(-24px 50% -24px 50%)}}
-@keyframes df2{from{clip-path:inset(-24px 50% -24px 50%)}to{clip-path:inset(-24px)}}
+.dk.f1{animation:df1 .28s ease-in forwards}.dk.f2{animation:df2 .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes df1{from{transform:perspective(900px) rotateY(0)}to{transform:perspective(900px) rotateY(90deg)}}
+@keyframes df2{from{transform:perspective(900px) rotateY(-90deg)}to{transform:perspective(900px) rotateY(0)}}
 .dc{position:absolute;inset:0;border-radius:14px;z-index:calc(9 - var(--k));transform:translate(calc(var(--k)*5px),calc(var(--k)*-4px));box-shadow:0 3px 10px #0009;touch-action:none}
 .dc>.back,.dc>.front{transform:none;position:absolute;inset:0;border-radius:14px;overflow:hidden}
 .dc>.front img{width:100%;height:100%;display:block}
@@ -302,6 +308,16 @@ body.zo #m .card>i,body.zo #m .card>b,body.zo #ov .card>i,body.zo #ov .card>b{vi
 /* bandeau opaque : rien ne passe en dessous */
 header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;z-index:8;box-shadow:0 6px 14px -6px #000}
 .dxs:not(.open) .dxb{display:none}
+
+/* cartes spéciales : spectaculaires, chromatiques, chromatiques full art */
+.hl.k-amazing{opacity:.85;mix-blend-mode:color-dodge;filter:saturate(1.3);background:repeating-linear-gradient(125deg,#ff4fd8aa 0 5%,#4fe0ffaa 5% 10%,#ffe84faa 10% 15%,#6fff8aaa 15% 20%);background-size:220% 220%;background-position:var(--mx) var(--my)}
+.hl.k-amazing::after{mix-blend-mode:overlay;opacity:.7}
+.gr.k-amazing,.gr.k-shiny,.gr.k-shinyfa{display:none}
+.hl.k-shiny{-webkit-mask:linear-gradient(#000,#000) 50% 19.5%/85% 41% no-repeat;mask:linear-gradient(#000,#000) 50% 19.5%/85% 41% no-repeat;mix-blend-mode:screen;opacity:1;filter:none;background:linear-gradient(115deg,transparent 18%,#ffd98a88 38%,#fff0b8dd 50%,#9fe0ff88 62%,transparent 82%),radial-gradient(circle at var(--mx) var(--my),#ffffff77,transparent 45%);background-size:300% 300%,100% 100%;background-position:var(--mx) var(--my),0 0}
+.hl.k-shinyfa{opacity:1;filter:saturate(1.8) brightness(1.2);background:linear-gradient(115deg,transparent 8%,#ffcf4a 22%,#ff5fd0 36%,#5fe8ff 50%,#fff06a 64%,#7affa0 78%,transparent 92%);background-size:240% 240%;background-position:var(--mx) var(--my)}
+.stars.win{inset:11.5% 7.5% 47.5% 7.5%}
+.stars.win u{text-shadow:0 0 2px #fff,0 0 8px #9fe0ff,0 0 14px #ffd86b}
+.zr{font-size:12px;color:var(--mut);margin-top:-6px;text-align:center}
 </style>
 </head>
 <body>
@@ -376,6 +392,7 @@ $('#acc').onclick=async()=>{
  else authDlg();
 };
 const j=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
+const nameFloor=n=>/(^|[\s-])(v|vmax|vstar|gx|ex)(\s|$)/i.test(String(n||''))?4:0;
 function tier(c){
  if(c.category==='Energy'&&c.energyType==='Normal')return 0;
  const r=(c.rarity||'none').toLowerCase().trim();
@@ -390,14 +407,31 @@ function tier(c){
  if(/commune|common|コモン/.test(r))return 1;
  return 3;
 }
+// cartes françaises des sous-séries absentes de l'API : noms et images de Poképédia (pages « Nom (Extension SV001) »)
+async function frWikiCards(setName){
+ const k='fw3:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
+ if(hit)return hit;
+ const norm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ const out={};
+ for(const ttl of [setName,setName+' (JCC)',setName+' (TCG)']){let cont={};
+ for(let n=0;n<5;n++){
+  const r=await wk({action:'query',generator:'links',titles:ttl,gpllimit:'500',gplnamespace:'0',prop:'pageimages',piprop:'thumbnail',pithumbsize:'500',...cont});
+  Object.values((r.query||{}).pages||{}).forEach(pg=>{const m=/^(.+) \((.+) ([A-Z]{0,3}\d+)\)$/.exec(pg.title||'');if(m&&norm(m[2])===norm(setName)&&pg.thumbnail&&pg.thumbnail.source)out[m[3].toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')]={name:m[1],img:pg.thumbnail.source}});
+  if(r.continue)cont=r.continue;else break;
+ }
+ if(Object.keys(out).length)break}
+ if(Object.keys(out).length){try{localStorage.setItem(k,JSON.stringify(out))}catch(e){}}
+ return out;
+}
 async function loadSet(id,prog){
- const k=`rc5:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc14:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
+ window._bad=0;
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||''}catch(e){}
+    let t=1,rar='',ok=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||'';ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok){t=Math.max(1,nameFloor(c.name));window._bad=1}
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
@@ -408,8 +442,30 @@ async function loadSet(id,prog){
  };
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
- const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[])]};
- try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
+ const badN=new Set();window._dbg={fr:(main.s.cards||[]).length,frImg:main.out.length,id};
+ if(lang==='fr'){const all=[...main.out,...(extra?extra.out:[])],ok=u=>new Promise(r=>{const im=new Image();im.onload=()=>r(1);im.onerror=()=>r(0);im.src=u});
+  const smp=[all[0],all[all.length>>1],all[all.length-1]].filter(Boolean),sr=await Promise.all(smp.map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));
+  if(sr.some(v=>!v))for(let i=0;i<all.length;i+=12){const rs=await Promise.all(all.slice(i,i+12).map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));rs.forEach((v,x)=>{if(!v)badN.add(String(all[i+x].num))});prog(.9+.05*i/all.length)}
+  if(badN.size){main.out=main.out.filter(c=>!badN.has(String(c.num)));if(extra)extra.out=extra.out.filter(c=>!badN.has(String(c.num)))}}
+ let enx=[];
+ if(lang!=='en'&&lang!=='ja'){try{
+  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>c.image&&!badN.has(String(c.localId))).map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
+  try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
+  if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
+  const frAll=[...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>!(c.image&&!badN.has(String(c.localId)))).map(c=>({...c,fr:1}));
+  window._dbg.en=enc.length;
+  const seen=new Set(),miss=[...frAll,...enc].filter(c=>!have.has(String(c.localId))&&!seen.has(String(c.localId))&&seen.add(String(c.localId)));
+  for(let i=0;i<miss.length;i+=12){
+   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
+    if(d){rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}
+    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:c.image||(d&&d.image)||'',t,rar,sub:isSub?1:0,sh:0,en:c.fr?0:1}}));
+   enx.push(...p);
+  }
+ }catch(e){enx=[]}}
+ if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));window._fwn=Object.keys(fw).length;enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
+ window._dbg.miss=enx.length;window._dbg.wiki=window._fwn;enx=enx.filter(c=>c.img);window._dbg.kept=enx.length;
+ const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
+ if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
  return d;
 }
 // ---- Raretés : un profil par époque + taux mesurés pour certaines extensions ----
@@ -506,6 +562,14 @@ const SUB={
 };
 [SET_P,SUB].forEach(o=>{for(const k of Object.keys(o)){const n=nid(k);if(n!==k){o[n]=o[k];delete o[k]}}});
 const subOf=id=>SUB[nid(id)],SUBIDS=new Set(Object.values(SUB).flatMap(x=>x.ids).map(nid));
+// sous-séries repérées automatiquement : un identifiant = celui de l'extension + 1 à 3 lettres (galeries, coffres, collections classiques…)
+const AUTOSUB={};
+const subIds=id=>{const a=subOf(id)?subOf(id).ids:[];return[...new Set([...a,...(AUTOSUB[nid(id)]||[])])]};
+function findAutoSubs(all){
+ if(lang==='ja')return;
+ const ids=all.map(x=>String(x.id));
+ ids.forEach(m=>{const ml=m.toLowerCase();ids.forEach(x=>{const xl=x.toLowerCase();if(xl!==ml&&xl.startsWith(ml)&&/^[a-z]{1,3}$/.test(xl.slice(ml.length))){(AUTOSUB[nid(m)]=AUTOSUB[nid(m)]||[]).push(x);SUBIDS.add(nid(x))}})});
+}
 function eraOf(d,id){
  if(lang==='ja'){
   // Booster japonais de 5 cartes : un seul emplacement « rare ». Taux par booster déduits des moyennes par boîte de 30 (RR ≈ 4, AR ≈ 3, SR ≈ 1-2, SAR ≈ 1 boîte sur 3-5, UR ≈ 1 sur 10)
@@ -559,7 +623,8 @@ function store(cards,id,d,idx){
  return cards.map(c=>{const k=`${lang}:${c.id}`,e=S.cards[k]||(S.cards[k]={id:c.id,lang,set:id,num:c.num,name:c.name,img:c.img,t:c.t,rar:c.rar,n:0});
   const isNew=e.n===0;e.n++;if(c.rev)e.rev=1;return isNew});
 }
-const low=c=>c.img+'/low.webp',high=c=>c.img+'/high.webp';
+const direct=u=>/\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(u);
+const low=c=>direct(c.img)?c.img:c.img+'/low.webp',high=c=>direct(c.img)?c.img:c.img+'/high.webp';
 // ---- Visuels : logos (avec repli), boosters ----
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hue=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))%360;return h};
@@ -671,8 +736,15 @@ function fitArt(im){
  if(ox>1){add(0,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'0 0');add(ox+dw-1,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'100% 0')}
 }
 const isSec=c=>{const so=typeof sets!=='undefined'&&sets.find(x=>x.id===c.set),off=so&&so.cardCount&&so.cardCount.official,n=parseInt(c.num,10);return !!(off&&n>off)};
-const effT=c=>{if(c.t===0)return 0;const t=c.rar?tier({rarity:c.rar}):c.t;return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
-const holoKind=c=>{const t=effT(c),r=String(c.rar||'').toLowerCase();
+const effBase=c=>{if(c.t===0)return 0;const t=Math.max(c.rar?tier({rarity:c.rar}):c.t,nameFloor(c.name));return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
+// cartes à part : « Amazing Rare » (spectaculaire), chromatiques (shiny) et chromatiques full art
+const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
+ if(/amazing|spectacul|extraordin|fantastiq|incroyable|merveill|[ée]tonnant|sublime|magnifi/.test(r))return'amazing';
+ if(/shiny|chromatique|brillant/.test(r))return/\b(v|vmax|vstar|gx|ex)\b|ultra|full|illus|secret|rainbow|gold/.test(r)?'shinyfa':'shiny';
+ return''};
+const effT=c=>{const b=effBase(c),sp=special(c);return sp==='amazing'?Math.max(b,6):sp==='shinyfa'?8:sp==='shiny'?5:b};
+const RL=c=>{const sp=special(c);return sp==='shiny'?'Chromatique':sp==='shinyfa'?'Chromatique full art':sp==='amazing'?'Rare spectaculaire':TN[effT(c)]};
+const holoKind=c=>{const sp=special(c);if(sp)return sp;const t=effT(c),r=String(c.rar||'').toLowerCase();
  if(t<=2)return c.rev?'rev':'';
  if(t===3)return /holo/.test(r)?'holo':(c.rev?'rev':'');
  if(t===4)return 'fa';
@@ -681,7 +753,8 @@ const holoKind=c=>{const t=effT(c),r=String(c.rar||'').toLowerCase();
  if(t===8)return /rainbow|arc-en/.test(r)?'rainbow':'gold';
  return ''};
 const STARS=t=>{const P=[[14,12],[78,9],[48,24],[88,38],[22,46],[62,55],[10,70],[80,78],[40,86],[56,40],[30,28],[92,62]];return '<i class="sw"></i><b class="stars">'+P.slice(0,t>=8?12:8).map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.37%1.6).toFixed(2)}s;--z:${(8+i%4*4+(t>=8?4:0))}">✦</u>`).join('')+'</b>'};
-const holoHTML=c=>{const k=holoKind(c),t=effT(c);return `<i class="bd s${t}"></i>`+(t>=6?'<i class="sk"></i>':'')+(t>=7?STARS(t):'')+(k?`<i class="hl k-${k}"></i><i class="gr k-${k}"></i>`:'')};
+const STARSW=()=>{const P=[[12,18],[70,10],[38,42],[86,52],[20,72],[58,80],[90,24],[48,16],[30,60],[76,70]];return '<b class="stars win">'+P.map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.41%1.8).toFixed(2)}s;--z:${(8+i%3*4)}">✦</u>`).join('')+'</b>'};
+const holoHTML=c=>{const k=holoKind(c),t=effT(c);return `<i class="bd s${t}"></i>`+(t>=6&&k!=='amazing'?'<i class="sk"></i>':'')+(k==='shiny'?STARSW():'')+(t>=7?STARS(t):'')+(k?`<i class="hl k-${k}"></i><i class="gr k-${k}"></i>`:'')};
 // la lumière suit le doigt / la souris (et la carte s'incline) ; au repos, tout glisse tout seul
 (()=>{const idle=new WeakMap();
  document.addEventListener('pointermove',e=>{const el=e.target.closest&&e.target.closest('.stage,.card');if(!el||el.id==='zs')return;const r=el.getBoundingClientRect();if(!r.width)return;
@@ -804,23 +877,25 @@ async function openPack(id,idx,v=0,art=''){
  refill();
  if(S.stock.n<1){ov.innerHTML=`<div>Plus de booster pour l’instant. Prochain booster dans ${left()}.</div><button id="x">Fermer</button>`;$('#x').onclick=()=>ov.className='';return}
  ov.innerHTML='<div>Préparation du booster…</div><div class="prog"><i id="pb"></i></div>';
- let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
- if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
+ let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(String(e&&e.message||e))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
+ if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(JSON.stringify(window._dbg||{}))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
  S.stock.n--;const pack=roll(d,id),news=store(pack,id,d,idx);S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
  let i=0,up=false;
  const sObj=sets[idx]||{id,name:d.name};
  const show=()=>{
   if(i>=pack.length){
-   ov.innerHTML=`<h2>${d.name}</h2><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${c.t}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
+   ov.innerHTML=`<h2>${d.name}</h2><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
-  const c=pack[i],rest=pack.slice(i,i+4);pre(i+1);
-  const tagUp=`${c.name} · ${TN[c.t]}${news[i]?' · Nouveau !':''}`;
-  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k?low(x):high(x)}" alt="${esc(x.name)}" decoding="async">${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
+  const c=Object.assign({},pack[i]);c.t=effT(c);const rest=pack.slice(i,i+4);pre(i+1);
+  const tagUp=`${c.name} · ${RL(c)}${news[i]?' · Nouveau !':''}`;
+  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
   <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>`;
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
   const next=dir=>{if(busy)return;busy=true;top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
-  const flipDeck=()=>{if(busy)return;busy=true;const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const flipDeck=async()=>{if(busy)return;busy=true;const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+   const im=top.querySelector('img');if(im&&!(im.complete&&im.naturalWidth>0)){$('#hn').textContent='Chargement de la carte…';await Promise.race([new Promise(r=>{im.addEventListener('load',r,{once:true});im.addEventListener('error',r,{once:true})}),new Promise(r=>setTimeout(r,4000))])}
+   try{if(im&&im.decode)await im.decode()}catch(e){}
    const fin=()=>{up=true;st.classList.add('up');dk.classList.remove('f1');dk.classList.add('f2');$('#tg').innerHTML=tagUp;$('#tg').style.color=`var(--b${c.t})`;$('#hn').textContent='Fais glisser la carte sur le côté';revealFx(c.t,st);busy=false};
    if(rm)fin();else{dk.classList.add('f1');setTimeout(fin,240)}};
   let x0=null,dx=0,moved=false;
@@ -844,11 +919,27 @@ function render(){
   $('#q').oninput=e=>{q=e.target.value;list()};list();
  }else collection();
 }
+async function subList(so){
+ const k=`sx3:${lang}:${so.id}`,T=(so.cardCount&&so.cardCount.total)||0;let lst=null;
+ try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
+ if(!lst){
+  let ok=false;lst=[];
+  for(const sid of subIds(so.id)){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));ok=true;break}catch(e){}}
+  if(lang!=='en'&&lang!=='ja'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
+   try{enc=(await j(`${API}/en/sets/${so.id}`)).cards||[]}catch(e){}
+   if(!ok)for(const sid of subIds(so.id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
+   lst=[...new Set([...lst,...enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId))])]}catch(e){lst=ok?lst:null}}
+  else if(!ok)lst=null;
+  if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
+ }
+ return lst?lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>T):null;
+}
 function list(){
  const sl=$('#sl');if(!sets.length){sl.innerHTML='<div class="msg">Chargement des extensions…</div>';return}
  const f=sets.map((s,i)=>[s,i]).filter(([s])=>!SUBIDS.has(nid(s.id))&&s.name.toLowerCase().includes(q.toLowerCase()));
  sl.innerHTML=f.map(([s,i])=>`<button class="set" data-i="${i}" style="--h:${hue(s.id)}"><span class="lg">${logoOf(s)}</span><b>${esc(s.name)}</b><small>${s.cardCount?s.cardCount.total:''} cartes</small></button>`).join('')||'<div class="msg">Aucune extension trouvée.</div>';
  sl.querySelectorAll('.set').forEach(b=>b.onclick=()=>pickPack(+b.dataset.i));lazyLogos(sl);
+ (()=>{const q=f.filter(([s])=>s.cardCount);const run=async()=>{while(q.length){const [s,i]=q.shift();if(!sl.isConnected)return;const l=await subList(s).catch(()=>null);if(!l||!l.length)continue;const el=sl.querySelector(`.set[data-i="${i}"] small`);if(el)el.textContent=(s.cardCount.total+l.length)+' cartes'}};run();run();run()})();
 }
 
 function zoomCard(keys,k){
@@ -860,7 +951,7 @@ function zoomCard(keys,k){
  const draw=()=>{
   const c=S.cards[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${TN[t]} · ×${c.n}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
+  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
   const mv=e=>{const r=zs.getBoundingClientRect(),x=Math.min(1.2,Math.max(-.2,(e.clientX-r.left)/r.width)),y=Math.min(1.2,Math.max(-.2,(e.clientY-r.top)/r.height));
    zs.style.setProperty('--tx',((x-.5)*70).toFixed(1)+'deg');zs.style.setProperty('--ty',((.5-y)*55).toFixed(1)+'deg');zs.style.setProperty('--mx',(x*100).toFixed(1)+'%');zs.style.setProperty('--my',(y*100).toFixed(1)+'%')};
@@ -895,12 +986,9 @@ function dex(tabs,all){
   mine.forEach(c=>{const n=/^\d+$/.test(String(c.num))?parseInt(c.num,10):0;if(n&&!byN[n])byN[n]=c;else extra.push(c)});
   for(let n=1;n<=T;n++)cells.push(byN[n]?cardHTML(byN[n]):`<div class="slot"><span>${n}</span></div>`);
   Object.keys(byN).map(Number).filter(n=>n>T).forEach(n=>cells.push(cardHTML(byN[n])));
-  return `<div class="grid dxg">${cells.join('')}</div>${extra.length||subOf(so.id)?`<div class="grid dxg dxe" data-id="${esc(so.id)}">${extra.map(cardHTML).join('')}</div>`:''}`};
+  return `<div class="grid dxg">${cells.join('')}</div><div class="grid dxg dxe" data-id="${esc(so.id)}">${extra.map(cardHTML).join('')}</div>`};
  const loadSub=async(so,sec)=>{
-  if(!subOf(so.id))return;
-  const ids=subOf(so.id).ids,k=`sx1:${lang}:${so.id}`;let lst=null;
-  try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
-  if(!lst){for(const sid of ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}break}catch(e){}}}
+  const lst=await subList(so);
   const g=sec.querySelector('.dxe');if(!g||!lst)return;
   const mine=(own[so.id]||[]).filter(c=>!/^\d+$/.test(String(c.num))),by={};mine.forEach(c=>{by[String(c.num)]=c});
   const used=new Set(lst);
@@ -916,7 +1004,25 @@ function dex(tabs,all){
  $('#cl').querySelectorAll('.dxs').forEach(sec=>{sec.querySelector('.dxh').onclick=()=>toggle(sec);if(open.has(sec.dataset.id))toggle(sec,true)});
  if(fs){const sec=$('#cl').querySelector('.dxs');if(sec)sec.scrollIntoView({block:'start'})}
 }
+// met à jour les anciennes cartes de la collection : récupère leur rareté exacte (pour les effets) une seule fois
+let rfBusy=false;
+async function refreshRarities(){
+ if(rfBusy)return;
+ const todo=Object.values(S.cards).filter(c=>!c.rar&&!c.rf&&c.t!==0);
+ if(!todo.length)return;
+ rfBusy=true;let n=0;
+ const one=async c=>{
+  for(const l of [c.lang,'en']){
+   try{const d=await j(`${API}/${l}/cards/${c.id}`);c.rar=d.rarity||'';c.t=c.t===0?0:tier(d);if(d.category==='Energy'&&d.energyType==='Normal')c.t=0;n++;return}catch(e){}
+  }
+  c.rf=1; // introuvable : on ne réessaie pas
+ };
+ for(let i=0;i<todo.length;i+=6)await Promise.all(todo.slice(i,i+6).map(one));
+ rfBusy=false;
+ if(n){persist();try{push()}catch(e){}if(view==='c')collection()}
+}
 function collection(){
+ if(!window._rfd){window._rfd=1;refreshRarities()}
  setTimeout(()=>{const cl=$('#cl');if(cl)cl.onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...cl.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)}},0);
  const m=$('#m'),all=Object.values(S.cards).filter(c=>c.lang===lang);
  const tabs=`<div class="seg"><button data-v="mine"${(window._cv||'mine')==='mine'?' class="on"':''}>Mes cartes</button><button data-v="dex"${window._cv==='dex'?' class="on"':''}>Pokédex</button></div>`;
@@ -957,6 +1063,7 @@ async function init(){
  $('#lang').value=lang;sets=[];render();
  try{const k='sets:'+lang;let s=localStorage.getItem(k);s=s?JSON.parse(s):await j(`${API}/${lang}/sets`);
   try{localStorage.setItem(k,JSON.stringify(s))}catch(e){}
+  findAutoSubs(s);
   sets=s.filter(x=>!/promo|black star|jumbo|mc ?donald|happy meal|プロモ|マクドナルド/i.test(x.name)&&!/^(mcd\d+|\d{4}[a-z]{2})$/i.test(x.id)&&!['basep','wp','np','dpp','hgssp','bwp','xyp','smp','swshp','svp','mep'].includes(x.id)&&!HID.has(x.id));sets.forEach(x=>{if(/(^|\D)30(\D|$)|30\s*(th|e|ème|eme)/i.test(x.name)&&/anniv|c[ée]l[ée]br|\bans\b|th\b/i.test(x.name))LOCAL[x.id]=LOCAL.anniv30});}catch(e){$('#m').innerHTML='<div class="msg">Impossible de joindre la base TCGdex. Vérifie ta connexion.</div>';return}
  if(location.hash==='#diag'){diag();return}
  if(view==='b')list();
