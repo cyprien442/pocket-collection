@@ -815,7 +815,7 @@ async function openPack(id,idx,v=0,art=''){
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
   const c=pack[i],rest=pack.slice(i,i+4);pre(i+1);
   const tagUp=`${c.name} · ${TN[c.t]}${news[i]?' · Nouveau !':''}`;
-  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k?low(x):high(x)}" alt="${esc(x.name)}"${k?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
+  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
   <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>`;
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
