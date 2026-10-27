@@ -4,12 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pocket Collection</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0d1322">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Pocket">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -205,9 +199,9 @@ header{background:#0d1322cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:b
 @keyframes bsp{to{--ang:360deg}}
 .stage.deck{--c:var(--bc);outline:none}
 .dk{position:absolute;inset:0}
-.dk.f1{animation:df1 .28s ease-in forwards}.dk.f2{animation:df2 .32s cubic-bezier(.2,.8,.2,1)}
-@keyframes df1{from{transform:perspective(900px) rotateY(0)}to{transform:perspective(900px) rotateY(90deg)}}
-@keyframes df2{from{transform:perspective(900px) rotateY(-90deg)}to{transform:perspective(900px) rotateY(0)}}
+.dk.f1{animation:df1 .24s ease-in forwards}.dk.f2{animation:df2 .24s ease-out}
+@keyframes df1{from{clip-path:inset(-24px)}to{clip-path:inset(-24px 50% -24px 50%)}}
+@keyframes df2{from{clip-path:inset(-24px 50% -24px 50%)}to{clip-path:inset(-24px)}}
 .dc{position:absolute;inset:0;border-radius:14px;z-index:calc(9 - var(--k));transform:translate(calc(var(--k)*5px),calc(var(--k)*-4px));box-shadow:0 3px 10px #0009;touch-action:none}
 .dc>.back,.dc>.front{transform:none;position:absolute;inset:0;border-radius:14px;overflow:hidden}
 .dc>.front img{width:100%;height:100%;display:block}
@@ -397,14 +391,13 @@ function tier(c){
  return 3;
 }
 async function loadSet(id,prog){
- const k=`rc20:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc5:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
- window._bad=0;
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='',ok=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||'';ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok)window._bad=1;
+    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||''}catch(e){}
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
@@ -416,7 +409,7 @@ async function loadSet(id,prog){
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[])]};
- if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
+ try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
 }
 // ---- Raretés : un profil par époque + taux mesurés pour certaines extensions ----
@@ -822,14 +815,12 @@ async function openPack(id,idx,v=0,art=''){
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
   const c=pack[i],rest=pack.slice(i,i+4);pre(i+1);
   const tagUp=`${c.name} · ${TN[c.t]}${news[i]?' · Nouveau !':''}`;
-  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
+  ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k?low(x):high(x)}" alt="${esc(x.name)}" decoding="async">${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
   <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>`;
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
   const next=dir=>{if(busy)return;busy=true;top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
-  const flipDeck=async()=>{if(busy)return;busy=true;const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-   const im=top.querySelector('img');if(im&&!(im.complete&&im.naturalWidth>0)){$('#hn').textContent='Chargement de la carte…';await Promise.race([new Promise(r=>{im.addEventListener('load',r,{once:true});im.addEventListener('error',r,{once:true})}),new Promise(r=>setTimeout(r,4000))])}
-   try{if(im&&im.decode)await im.decode()}catch(e){}
+  const flipDeck=()=>{if(busy)return;busy=true;const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
    const fin=()=>{up=true;st.classList.add('up');dk.classList.remove('f1');dk.classList.add('f2');$('#tg').innerHTML=tagUp;$('#tg').style.color=`var(--b${c.t})`;$('#hn').textContent='Fais glisser la carte sur le côté';revealFx(c.t,st);busy=false};
    if(rm)fin();else{dk.classList.add('f1');setTimeout(fin,240)}};
   let x0=null,dx=0,moved=false;
