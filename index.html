@@ -423,7 +423,7 @@ async function frWikiCards(setName){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc10:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc11:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -440,9 +440,13 @@ async function loadSet(id,prog){
  };
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
+ const badN=new Set();
+ if(lang==='fr'){const all=[...main.out,...(extra?extra.out:[])],ok=u=>new Promise(r=>{const im=new Image();im.onload=()=>r(1);im.onerror=()=>r(0);im.src=u});
+  for(let i=0;i<all.length;i+=12){const rs=await Promise.all(all.slice(i,i+12).map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));rs.forEach((v,x)=>{if(!v)badN.add(String(all[i+x].num))});prog(.9+.05*i/all.length)}
+  if(badN.size){main.out=main.out.filter(c=>!badN.has(String(c.num)));if(extra)extra.out=extra.out.filter(c=>!badN.has(String(c.num)))}}
  let enx=[];
  if(lang!=='en'&&lang!=='ja'){try{
-  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>c.image).map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
+  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>c.image&&!badN.has(String(c.localId))).map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
   try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
   if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
   const seen=new Set(),miss=enc.filter(c=>c.image&&!have.has(String(c.localId))&&!seen.has(c.id)&&seen.add(c.id));
