@@ -392,6 +392,7 @@ $('#acc').onclick=async()=>{
  else authDlg();
 };
 const j=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
+const nameFloor=n=>/(^|[\s-])(v|vmax|vstar|gx|ex)(\s|$)/i.test(String(n||''))?4:0;
 function tier(c){
  if(c.category==='Energy'&&c.energyType==='Normal')return 0;
  const r=(c.rarity||'none').toLowerCase().trim();
@@ -423,13 +424,13 @@ async function frWikiCards(setName){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc12:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc13:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||''}catch(e){}
+    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||''}catch(e){t=Math.max(1,nameFloor(c.name))}
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
@@ -733,7 +734,7 @@ function fitArt(im){
  if(ox>1){add(0,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'0 0');add(ox+dw-1,T+oy,ox+1,dh,`${ox/S}px ${dh}px`,'100% 0')}
 }
 const isSec=c=>{const so=typeof sets!=='undefined'&&sets.find(x=>x.id===c.set),off=so&&so.cardCount&&so.cardCount.official,n=parseInt(c.num,10);return !!(off&&n>off)};
-const effBase=c=>{if(c.t===0)return 0;const t=c.rar?tier({rarity:c.rar}):c.t;return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
+const effBase=c=>{if(c.t===0)return 0;const t=Math.max(c.rar?tier({rarity:c.rar}):c.t,nameFloor(c.name));return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
 // cartes à part : « Amazing Rare » (spectaculaire), chromatiques (shiny) et chromatiques full art
 const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
  if(/amazing|spectacul|extraordin|fantastiq|incroyable|merveill|[ée]tonnant|sublime|magnifi/.test(r))return'amazing';
