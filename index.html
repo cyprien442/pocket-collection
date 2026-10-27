@@ -423,8 +423,23 @@ async function frWikiCards(setName){
  if(Object.keys(out).length){try{localStorage.setItem(k,JSON.stringify(out))}catch(e){}}
  return out;
 }
+const probeImg=u=>new Promise(r=>{const im=new Image();const t=setTimeout(()=>r(0),8000);im.onload=()=>{clearTimeout(t);r(1)};im.onerror=()=>{clearTimeout(t);r(0)};im.src=u});
+// Pokedexia : base de cartes françaises ; adresse d'image déduite du nom de la série et de l'extension, vérifiée avant usage
+async function pdxCards(set,nums){
+ const out={};if(!set||!nums.length)return out;
+ const sn=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' et ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+ const ser=set.serie||{},fold=String(ser.id||'').toLowerCase(),sid=String(set.id||'');
+ const slugs=[...new Set([sn(ser.name+' '+set.name),sn(String(ser.name||'').replace(/&/g,' ')+' '+set.name),sn(set.name)])];
+ const ids=[...new Set([sid,sid.replace(/\./g,'')])],cl=n=>String(n).replace(/^([A-Za-z]*)0+(?=\d)/,'$1');
+ const mk=(sl,pid,n)=>`https://cdn.pokedexia.com/cards/${fold}/${sl}/cards/${pid}-${cl(n)}-low.webp`;
+ let hit=null;
+ for(const sl of slugs){for(const pid of ids){if(await probeImg(mk(sl,pid,nums[0]))){hit=[sl,pid];break}}if(hit)break}
+ if(!hit){window._dbg&&(window._dbg.pdx='non trouvé '+slugs[0]);return out}
+ for(let i=0;i<nums.length;i+=12){const rs=await Promise.all(nums.slice(i,i+12).map(n=>{const u=mk(hit[0],hit[1],n);return probeImg(u).then(v=>v?[n,u]:null)}));rs.forEach(r=>{if(r)out[r[0]]=r[1]})}
+ return out;
+}
 async function loadSet(id,prog){
- const k=`rc14:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc15:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  window._bad=0;
  const grab=async(sid,sub,a,b)=>{
@@ -454,15 +469,18 @@ async function loadSet(id,prog){
   if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
   const frAll=[...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>!(c.image&&!badN.has(String(c.localId)))).map(c=>({...c,fr:1}));
   window._dbg.en=enc.length;
+  const enImg={};enc.forEach(c=>{if(c.image)enImg[String(c.localId)]=c.image});
   const seen=new Set(),miss=[...frAll,...enc].filter(c=>!have.has(String(c.localId))&&!seen.has(String(c.localId))&&seen.add(String(c.localId)));
   for(let i=0;i<miss.length;i+=12){
    const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
     if(d){rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}
-    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:c.image||(d&&d.image)||'',t,rar,sub:isSub?1:0,sh:0,en:c.fr?0:1}}));
+    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:'',fb:enImg[String(c.localId)]||(c.fr?'':c.image)||'',t,rar,sub:isSub?1:0,sh:0,en:1}}));
    enx.push(...p);
   }
  }catch(e){enx=[]}}
  if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));window._fwn=Object.keys(fw).length;enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
+ if(lang==='fr'&&enx.some(c=>!c.img)){try{const todo=enx.filter(c=>!c.img),pd=await pdxCards(main.s,todo.map(c=>String(c.num)));window._dbg.pdx=Object.keys(pd).length;todo.forEach(c=>{if(pd[String(c.num)]){c.img=pd[String(c.num)];c.en=0}})}catch(e){window._dbg.pdxErr=String(e)}}
+ enx.forEach(c=>{if(!c.img&&c.fb)c.img=c.fb;delete c.fb});
  window._dbg.miss=enx.length;window._dbg.wiki=window._fwn;enx=enx.filter(c=>c.img);window._dbg.kept=enx.length;
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
