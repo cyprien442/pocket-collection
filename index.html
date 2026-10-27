@@ -391,7 +391,7 @@ function tier(c){
  return 3;
 }
 async function loadSet(id,prog){
- const k=`rc5:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc6:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -408,7 +408,16 @@ async function loadSet(id,prog){
  };
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
- const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[])]};
+ let enx=[];
+ if(!extra&&lang!=='en'){try{
+  const en=await j(`${API}/en/sets/${id}`),have=new Set((main.s.cards||[]).map(c=>String(c.localId)));
+  const miss=(en.cards||[]).filter(c=>c.image&&!have.has(String(c.localId)));
+  for(let i=0;i<miss.length;i+=12){
+   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='';try{const d=await j(`${API}/en/cards/${c.id}`);rar=d.rarity||''}catch(e){}
+    return{id:c.id,num:c.localId,name:c.name,img:c.image,t:/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3,rar,sub:1,sh:0,en:1}}));
+   enx.push(...p);
+  }}catch(e){enx=[]}}
+ const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
 }
@@ -897,12 +906,16 @@ function dex(tabs,all){
   mine.forEach(c=>{const n=/^\d+$/.test(String(c.num))?parseInt(c.num,10):0;if(n&&!byN[n])byN[n]=c;else extra.push(c)});
   for(let n=1;n<=T;n++)cells.push(byN[n]?cardHTML(byN[n]):`<div class="slot"><span>${n}</span></div>`);
   Object.keys(byN).map(Number).filter(n=>n>T).forEach(n=>cells.push(cardHTML(byN[n])));
-  return `<div class="grid dxg">${cells.join('')}</div>${extra.length||subOf(so.id)?`<div class="grid dxg dxe" data-id="${esc(so.id)}">${extra.map(cardHTML).join('')}</div>`:''}`};
+  return `<div class="grid dxg">${cells.join('')}</div><div class="grid dxg dxe" data-id="${esc(so.id)}">${extra.map(cardHTML).join('')}</div>`};
  const loadSub=async(so,sec)=>{
-  if(!subOf(so.id))return;
-  const ids=subOf(so.id).ids,k=`sx1:${lang}:${so.id}`;let lst=null;
+  const k=`sx2:${lang}:${so.id}`;let lst=null;
   try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
-  if(!lst){for(const sid of ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}break}catch(e){}}}
+  if(!lst){
+   if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));break}catch(e){}}}
+   if((!lst||!lst.length)&&lang!=='en'){try{const[fr,en]=await Promise.all([j(`${API}/${lang}/sets/${so.id}`),j(`${API}/en/sets/${so.id}`)]);const have=new Set((fr.cards||[]).map(c=>String(c.localId)));lst=(en.cards||[]).filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId))}catch(e){}}
+   if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
+  }
+  if(lst)lst=lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>tot(so));
   const g=sec.querySelector('.dxe');if(!g||!lst)return;
   const mine=(own[so.id]||[]).filter(c=>!/^\d+$/.test(String(c.num))),by={};mine.forEach(c=>{by[String(c.num)]=c});
   const used=new Set(lst);
