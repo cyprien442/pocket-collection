@@ -857,11 +857,25 @@ function render(){
   $('#q').oninput=e=>{q=e.target.value;list()};list();
  }else collection();
 }
+async function subList(so){
+ const k=`sx2:${lang}:${so.id}`,T=(so.cardCount&&so.cardCount.total)||0;let lst=null;
+ try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
+ if(!lst){
+  if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));break}catch(e){}}}
+  if((!lst||!lst.length)&&lang!=='en'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
+   try{enc=(await j(`${API}/en/sets/${so.id}`)).cards||[]}catch(e){}
+   if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
+   lst=[...new Set(enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId)))]}catch(e){}}
+  if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
+ }
+ return lst?lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>T):null;
+}
 function list(){
  const sl=$('#sl');if(!sets.length){sl.innerHTML='<div class="msg">Chargement des extensions…</div>';return}
  const f=sets.map((s,i)=>[s,i]).filter(([s])=>!SUBIDS.has(nid(s.id))&&s.name.toLowerCase().includes(q.toLowerCase()));
  sl.innerHTML=f.map(([s,i])=>`<button class="set" data-i="${i}" style="--h:${hue(s.id)}"><span class="lg">${logoOf(s)}</span><b>${esc(s.name)}</b><small>${s.cardCount?s.cardCount.total:''} cartes</small></button>`).join('')||'<div class="msg">Aucune extension trouvée.</div>';
  sl.querySelectorAll('.set').forEach(b=>b.onclick=()=>pickPack(+b.dataset.i));lazyLogos(sl);
+ (async()=>{for(const [s,i] of f){if(!subOf(s.id)||!s.cardCount)continue;const l=await subList(s).catch(()=>null);if(!l||!l.length)continue;const el=sl.querySelector(`.set[data-i="${i}"] small`);if(el)el.textContent=(s.cardCount.total+l.length)+' cartes'}})();
 }
 
 function zoomCard(keys,k){
@@ -910,17 +924,7 @@ function dex(tabs,all){
   Object.keys(byN).map(Number).filter(n=>n>T).forEach(n=>cells.push(cardHTML(byN[n])));
   return `<div class="grid dxg">${cells.join('')}</div><div class="grid dxg dxe" data-id="${esc(so.id)}">${extra.map(cardHTML).join('')}</div>`};
  const loadSub=async(so,sec)=>{
-  const k=`sx2:${lang}:${so.id}`;let lst=null;
-  try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
-  if(!lst){
-   if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));break}catch(e){}}}
-   if((!lst||!lst.length)&&lang!=='en'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
-    try{enc=(await j(`${API}/en/sets/${so.id}`)).cards||[]}catch(e){}
-    if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
-    lst=[...new Set(enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId)))]}catch(e){}}
-   if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
-  }
-  if(lst)lst=lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>tot(so));
+  const lst=await subList(so);
   const g=sec.querySelector('.dxe');if(!g||!lst)return;
   const mine=(own[so.id]||[]).filter(c=>!/^\d+$/.test(String(c.num))),by={};mine.forEach(c=>{by[String(c.num)]=c});
   const used=new Set(lst);
