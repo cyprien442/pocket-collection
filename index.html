@@ -405,7 +405,7 @@ async function frWikiCards(setName){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc8:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc9:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -423,14 +423,14 @@ async function loadSet(id,prog){
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  let enx=[];
- if(!extra&&lang!=='en'){try{
-  const have=new Set((main.s.cards||[]).map(c=>String(c.localId)));let enc=[];
+ if(lang!=='en'&&lang!=='ja'){try{
+  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
   try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
-  if(subOf(id)){for(const sid of subOf(id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
+  if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
   const seen=new Set(),miss=enc.filter(c=>c.image&&!have.has(String(c.localId))&&!seen.has(c.id)&&seen.add(c.id));
   for(let i=0;i<miss.length;i+=12){
-   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='';try{const d=await j(`${API}/en/cards/${c.id}`);rar=d.rarity||''}catch(e){}
-    return{id:c.id,num:c.localId,name:c.name,img:c.image,t:/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3,rar,sub:1,sh:0,en:1}}));
+   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3;try{const d=await j(`${API}/en/cards/${c.id}`);rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}catch(e){}
+    return{id:c.id,num:c.localId,name:c.name,img:c.image,t,rar,sub:isSub?1:0,sh:0,en:1}}));
    enx.push(...p);
   }}catch(e){enx=[]}}
  if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase()];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
@@ -532,6 +532,14 @@ const SUB={
 };
 [SET_P,SUB].forEach(o=>{for(const k of Object.keys(o)){const n=nid(k);if(n!==k){o[n]=o[k];delete o[k]}}});
 const subOf=id=>SUB[nid(id)],SUBIDS=new Set(Object.values(SUB).flatMap(x=>x.ids).map(nid));
+// sous-séries repérées automatiquement : un identifiant = celui de l'extension + 1 à 3 lettres (galeries, coffres, collections classiques…)
+const AUTOSUB={};
+const subIds=id=>{const a=subOf(id)?subOf(id).ids:[];return[...new Set([...a,...(AUTOSUB[nid(id)]||[])])]};
+function findAutoSubs(all){
+ if(lang==='ja')return;
+ const ids=all.map(x=>String(x.id));
+ ids.forEach(m=>{const ml=m.toLowerCase();ids.forEach(x=>{const xl=x.toLowerCase();if(xl!==ml&&xl.startsWith(ml)&&/^[a-z]{1,3}$/.test(xl.slice(ml.length))){(AUTOSUB[nid(m)]=AUTOSUB[nid(m)]||[]).push(x);SUBIDS.add(nid(x))}})});
+}
 function eraOf(d,id){
  if(lang==='ja'){
   // Booster japonais de 5 cartes : un seul emplacement « rare ». Taux par booster déduits des moyennes par boîte de 30 (RR ≈ 4, AR ≈ 3, SR ≈ 1-2, SAR ≈ 1 boîte sur 3-5, UR ≈ 1 sur 10)
@@ -874,14 +882,16 @@ function render(){
  }else collection();
 }
 async function subList(so){
- const k=`sx2:${lang}:${so.id}`,T=(so.cardCount&&so.cardCount.total)||0;let lst=null;
+ const k=`sx3:${lang}:${so.id}`,T=(so.cardCount&&so.cardCount.total)||0;let lst=null;
  try{lst=JSON.parse(localStorage.getItem(k))}catch(e){}
  if(!lst){
-  if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));break}catch(e){}}}
-  if((!lst||!lst.length)&&lang!=='en'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
+  let ok=false;lst=[];
+  for(const sid of subIds(so.id)){try{const d=await j(`${API}/${lang}/sets/${sid}`);lst=(d.cards||[]).map(c=>String(c.localId));ok=true;break}catch(e){}}
+  if(lang!=='en'&&lang!=='ja'){try{const fr=await j(`${API}/${lang}/sets/${so.id}`),have=new Set((fr.cards||[]).map(c=>String(c.localId)));let enc=[];
    try{enc=(await j(`${API}/en/sets/${so.id}`)).cards||[]}catch(e){}
-   if(subOf(so.id)){for(const sid of subOf(so.id).ids){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}}
-   lst=[...new Set(enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId)))]}catch(e){}}
+   if(!ok)for(const sid of subIds(so.id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
+   lst=[...new Set([...lst,...enc.filter(c=>c.image&&!have.has(String(c.localId))).map(c=>String(c.localId))])]}catch(e){lst=ok?lst:null}}
+  else if(!ok)lst=null;
   if(lst){try{localStorage.setItem(k,JSON.stringify(lst))}catch(e){}}
  }
  return lst?lst.filter(n=>!/^\d+$/.test(n)||parseInt(n,10)>T):null;
@@ -891,7 +901,7 @@ function list(){
  const f=sets.map((s,i)=>[s,i]).filter(([s])=>!SUBIDS.has(nid(s.id))&&s.name.toLowerCase().includes(q.toLowerCase()));
  sl.innerHTML=f.map(([s,i])=>`<button class="set" data-i="${i}" style="--h:${hue(s.id)}"><span class="lg">${logoOf(s)}</span><b>${esc(s.name)}</b><small>${s.cardCount?s.cardCount.total:''} cartes</small></button>`).join('')||'<div class="msg">Aucune extension trouvée.</div>';
  sl.querySelectorAll('.set').forEach(b=>b.onclick=()=>pickPack(+b.dataset.i));lazyLogos(sl);
- (async()=>{for(const [s,i] of f){if(!subOf(s.id)||!s.cardCount)continue;const l=await subList(s).catch(()=>null);if(!l||!l.length)continue;const el=sl.querySelector(`.set[data-i="${i}"] small`);if(el)el.textContent=(s.cardCount.total+l.length)+' cartes'}})();
+ (()=>{const q=f.filter(([s])=>s.cardCount);const run=async()=>{while(q.length){const [s,i]=q.shift();if(!sl.isConnected)return;const l=await subList(s).catch(()=>null);if(!l||!l.length)continue;const el=sl.querySelector(`.set[data-i="${i}"] small`);if(el)el.textContent=(s.cardCount.total+l.length)+' cartes'}};run();run();run()})();
 }
 
 function zoomCard(keys,k){
@@ -997,6 +1007,7 @@ async function init(){
  $('#lang').value=lang;sets=[];render();
  try{const k='sets:'+lang;let s=localStorage.getItem(k);s=s?JSON.parse(s):await j(`${API}/${lang}/sets`);
   try{localStorage.setItem(k,JSON.stringify(s))}catch(e){}
+  findAutoSubs(s);
   sets=s.filter(x=>!/promo|black star|jumbo|mc ?donald|happy meal|プロモ|マクドナルド/i.test(x.name)&&!/^(mcd\d+|\d{4}[a-z]{2})$/i.test(x.id)&&!['basep','wp','np','dpp','hgssp','bwp','xyp','smp','swshp','svp','mep'].includes(x.id)&&!HID.has(x.id));sets.forEach(x=>{if(/(^|\D)30(\D|$)|30\s*(th|e|ème|eme)/i.test(x.name)&&/anniv|c[ée]l[ée]br|\bans\b|th\b/i.test(x.name))LOCAL[x.id]=LOCAL.anniv30});}catch(e){$('#m').innerHTML='<div class="msg">Impossible de joindre la base TCGdex. Vérifie ta connexion.</div>';return}
  if(location.hash==='#diag'){diag();return}
  if(view==='b')list();
