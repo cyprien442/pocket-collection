@@ -397,13 +397,14 @@ function tier(c){
  return 3;
 }
 async function loadSet(id,prog){
- const k=`rc5:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc20:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
+ window._bad=0;
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||''}catch(e){}
+    let t=1,rar='',ok=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=tier(d);rar=d.rarity||'';ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok)window._bad=1;
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
@@ -415,7 +416,7 @@ async function loadSet(id,prog){
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[])]};
- try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
+ if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
  return d;
 }
 // ---- Raretés : un profil par époque + taux mesurés pour certaines extensions ----
