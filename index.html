@@ -408,20 +408,22 @@ function tier(c){
 }
 // cartes françaises des sous-séries absentes de l'API : noms et images de Poképédia (pages « Nom (Extension SV001) »)
 async function frWikiCards(setName){
- const k='fw2:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
+ const k='fw3:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
  if(hit)return hit;
  const norm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
- const out={};let cont={};
+ const out={};
+ for(const ttl of [setName,setName+' (JCC)',setName+' (TCG)']){let cont={};
  for(let n=0;n<5;n++){
-  const r=await wk({action:'query',generator:'links',titles:setName,gpllimit:'500',gplnamespace:'0',prop:'pageimages',piprop:'thumbnail',pithumbsize:'500',...cont});
+  const r=await wk({action:'query',generator:'links',titles:ttl,gpllimit:'500',gplnamespace:'0',prop:'pageimages',piprop:'thumbnail',pithumbsize:'500',...cont});
   Object.values((r.query||{}).pages||{}).forEach(pg=>{const m=/^(.+) \((.+) ([A-Z]{0,3}\d+)\)$/.exec(pg.title||'');if(m&&norm(m[2])===norm(setName)&&pg.thumbnail&&pg.thumbnail.source)out[m[3].toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')]={name:m[1],img:pg.thumbnail.source}});
   if(r.continue)cont=r.continue;else break;
  }
+ if(Object.keys(out).length)break}
  if(Object.keys(out).length){try{localStorage.setItem(k,JSON.stringify(out))}catch(e){}}
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc9:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc10:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -440,7 +442,7 @@ async function loadSet(id,prog){
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  let enx=[];
  if(lang!=='en'&&lang!=='ja'){try{
-  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
+  const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>c.image).map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
   try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
   if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
   const seen=new Set(),miss=enc.filter(c=>c.image&&!have.has(String(c.localId))&&!seen.has(c.id)&&seen.add(c.id));
