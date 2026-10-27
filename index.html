@@ -390,8 +390,22 @@ function tier(c){
  if(/commune|common|コモン/.test(r))return 1;
  return 3;
 }
+// cartes françaises des sous-séries absentes de l'API : noms et images de Poképédia (pages « Nom (Extension SV001) »)
+async function frWikiCards(setName){
+ const k='fw1:'+setName;let hit=null;try{hit=JSON.parse(localStorage.getItem(k))}catch(e){}
+ if(hit)return hit;
+ const norm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ const out={};let cont={};
+ for(let n=0;n<5;n++){
+  const r=await wk({action:'query',generator:'links',titles:setName,gpllimit:'500',gplnamespace:'0',prop:'pageimages',piprop:'thumbnail',pithumbsize:'500',...cont});
+  Object.values((r.query||{}).pages||{}).forEach(pg=>{const m=/^(.+) \((.+) ([A-Z]{0,3}\d+)\)$/.exec(pg.title||'');if(m&&norm(m[2])===norm(setName)&&pg.thumbnail&&pg.thumbnail.source)out[m[3].toUpperCase()]={name:m[1],img:pg.thumbnail.source}});
+  if(r.continue)cont=r.continue;else break;
+ }
+ if(Object.keys(out).length){try{localStorage.setItem(k,JSON.stringify(out))}catch(e){}}
+ return out;
+}
 async function loadSet(id,prog){
- const k=`rc7:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc8:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -419,6 +433,7 @@ async function loadSet(id,prog){
     return{id:c.id,num:c.localId,name:c.name,img:c.image,t:/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3,rar,sub:1,sh:0,en:1}}));
    enx.push(...p);
   }}catch(e){enx=[]}}
+ if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase()];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
@@ -570,7 +585,8 @@ function store(cards,id,d,idx){
  return cards.map(c=>{const k=`${lang}:${c.id}`,e=S.cards[k]||(S.cards[k]={id:c.id,lang,set:id,num:c.num,name:c.name,img:c.img,t:c.t,rar:c.rar,n:0});
   const isNew=e.n===0;e.n++;if(c.rev)e.rev=1;return isNew});
 }
-const low=c=>c.img+'/low.webp',high=c=>c.img+'/high.webp';
+const direct=u=>/\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(u);
+const low=c=>direct(c.img)?c.img:c.img+'/low.webp',high=c=>direct(c.img)?c.img:c.img+'/high.webp';
 // ---- Visuels : logos (avec repli), boosters ----
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hue=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))%360;return h};
