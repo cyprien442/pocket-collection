@@ -299,6 +299,8 @@ header{background:#0d1322cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:b
 .grid .card .hl,.grid .card .gr{animation-timing-function:steps(30)}
 .grid .card .bd{animation-timing-function:steps(40)}
 body.zo #m .card>i,body.zo #m .card>b,body.zo #ov .card>i,body.zo #ov .card>b{visibility:hidden}
+/* bandeau opaque : rien ne passe en dessous */
+header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;z-index:8;box-shadow:0 6px 14px -6px #000}
 </style>
 </head>
 <body>
