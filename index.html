@@ -424,13 +424,14 @@ async function frWikiCards(setName){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc13:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc14:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
+ window._bad=0;
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='';try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||''}catch(e){t=Math.max(1,nameFloor(c.name))}
+    let t=1,rar='',ok=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||'';ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok){t=Math.max(1,nameFloor(c.name));window._bad=1}
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
@@ -443,7 +444,8 @@ async function loadSet(id,prog){
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
  const badN=new Set();window._dbg={fr:(main.s.cards||[]).length,frImg:main.out.length,id};
  if(lang==='fr'){const all=[...main.out,...(extra?extra.out:[])],ok=u=>new Promise(r=>{const im=new Image();im.onload=()=>r(1);im.onerror=()=>r(0);im.src=u});
-  for(let i=0;i<all.length;i+=12){const rs=await Promise.all(all.slice(i,i+12).map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));rs.forEach((v,x)=>{if(!v)badN.add(String(all[i+x].num))});prog(.9+.05*i/all.length)}
+  const smp=[all[0],all[all.length>>1],all[all.length-1]].filter(Boolean),sr=await Promise.all(smp.map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));
+  if(sr.some(v=>!v))for(let i=0;i<all.length;i+=12){const rs=await Promise.all(all.slice(i,i+12).map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));rs.forEach((v,x)=>{if(!v)badN.add(String(all[i+x].num))});prog(.9+.05*i/all.length)}
   if(badN.size){main.out=main.out.filter(c=>!badN.has(String(c.num)));if(extra)extra.out=extra.out.filter(c=>!badN.has(String(c.num)))}}
  let enx=[];
  if(lang!=='en'&&lang!=='ja'){try{
@@ -463,7 +465,7 @@ async function loadSet(id,prog){
  if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));window._fwn=Object.keys(fw).length;enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
  window._dbg.miss=enx.length;window._dbg.wiki=window._fwn;enx=enx.filter(c=>c.img);window._dbg.kept=enx.length;
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
- try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
+ if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
  return d;
 }
 // ---- Raretés : un profil par époque + taux mesurés pour certaines extensions ----
