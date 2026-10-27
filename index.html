@@ -423,7 +423,7 @@ async function frWikiCards(setName){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc11:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc12:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
@@ -449,13 +449,17 @@ async function loadSet(id,prog){
   const have=new Set([...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>c.image&&!badN.has(String(c.localId))).map(c=>String(c.localId))),isSub=!!subOf(id);let enc=[];
   try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
   if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
-  const seen=new Set(),miss=enc.filter(c=>c.image&&!have.has(String(c.localId))&&!seen.has(c.id)&&seen.add(c.id));
+  const frAll=[...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>!(c.image&&!badN.has(String(c.localId)))).map(c=>({...c,fr:1}));
+  const seen=new Set(),miss=[...frAll,...enc].filter(c=>!have.has(String(c.localId))&&!seen.has(String(c.localId))&&seen.add(String(c.localId)));
   for(let i=0;i<miss.length;i+=12){
-   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3;try{const d=await j(`${API}/en/cards/${c.id}`);rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}catch(e){}
-    return{id:c.id,num:c.localId,name:c.name,img:c.image,t,rar,sub:isSub?1:0,sh:0,en:1}}));
+   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
+    if(d){rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}
+    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:c.image||(d&&d.image)||'',t,rar,sub:isSub?1:0,sh:0,en:c.fr?0:1}}));
    enx.push(...p);
-  }}catch(e){enx=[]}}
+  }
+ }catch(e){enx=[]}}
  if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
+ enx=enx.filter(c=>c.img);
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
