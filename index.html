@@ -440,7 +440,7 @@ async function loadSet(id,prog){
  };
  const main=await grab(id,0,0,subOf(id)?0.7:1);let extra=null;
  if(subOf(id)){for(const sid of subOf(id).ids){try{extra=await grab(sid,1,0.7,1);break}catch(e){}}}
- const badN=new Set();
+ const badN=new Set();window._dbg={fr:(main.s.cards||[]).length,frImg:main.out.length,id};
  if(lang==='fr'){const all=[...main.out,...(extra?extra.out:[])],ok=u=>new Promise(r=>{const im=new Image();im.onload=()=>r(1);im.onerror=()=>r(0);im.src=u});
   for(let i=0;i<all.length;i+=12){const rs=await Promise.all(all.slice(i,i+12).map(c=>direct(c.img)?1:ok(c.img+'/low.webp')));rs.forEach((v,x)=>{if(!v)badN.add(String(all[i+x].num))});prog(.9+.05*i/all.length)}
   if(badN.size){main.out=main.out.filter(c=>!badN.has(String(c.num)));if(extra)extra.out=extra.out.filter(c=>!badN.has(String(c.num)))}}
@@ -450,6 +450,7 @@ async function loadSet(id,prog){
   try{enc=(await j(`${API}/en/sets/${id}`)).cards||[]}catch(e){}
   if(!extra)for(const sid of subIds(id)){try{enc=enc.concat((await j(`${API}/en/sets/${sid}`)).cards||[]);break}catch(e){}}
   const frAll=[...(main.s.cards||[]),...(extra?extra.s.cards||[]:[])].filter(c=>!(c.image&&!badN.has(String(c.localId)))).map(c=>({...c,fr:1}));
+  window._dbg.en=enc.length;
   const seen=new Set(),miss=[...frAll,...enc].filter(c=>!have.has(String(c.localId))&&!seen.has(String(c.localId))&&seen.add(String(c.localId)));
   for(let i=0;i<miss.length;i+=12){
    const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
@@ -458,8 +459,8 @@ async function loadSet(id,prog){
    enx.push(...p);
   }
  }catch(e){enx=[]}}
- if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
- enx=enx.filter(c=>c.img);
+ if(lang==='fr'&&enx.length){try{const fw=await queued(()=>frWikiCards(main.s.name));window._fwn=Object.keys(fw).length;enx.forEach(c=>{const w=fw[String(c.num).toUpperCase().replace(/^([A-Z]*)0+(?=\d)/,'$1')];if(w){c.name=w.name;c.img=w.img;c.en=0}})}catch(e){}}
+ window._dbg.miss=enx.length;window._dbg.wiki=window._fwn;enx=enx.filter(c=>c.img);window._dbg.kept=enx.length;
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
  try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}
  return d;
@@ -873,8 +874,8 @@ async function openPack(id,idx,v=0,art=''){
  refill();
  if(S.stock.n<1){ov.innerHTML=`<div>Plus de booster pour l’instant. Prochain booster dans ${left()}.</div><button id="x">Fermer</button>`;$('#x').onclick=()=>ov.className='';return}
  ov.innerHTML='<div>Préparation du booster…</div><div class="prog"><i id="pb"></i></div>';
- let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
- if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
+ let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(String(e&&e.message||e))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
+ if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(JSON.stringify(window._dbg||{}))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
  S.stock.n--;const pack=roll(d,id),news=store(pack,id,d,idx);S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
  let i=0,up=false;
  const sObj=sets[idx]||{id,name:d.name};
