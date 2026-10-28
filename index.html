@@ -524,7 +524,7 @@ const EX={c:1,u:2,r:3,rr:4,rrr:5,ar:5,sr:6,sar:7,ur:8,hr:8,none:1};
 Object.keys(localStorage).filter(k=>/^(rc[2]?|wk[1234]):/.test(k)).forEach(k=>localStorage.removeItem(k));
 let lang=localStorage.getItem('pc_lang')||'fr',view='b',sets=[],q='';
 let S=JSON.parse(localStorage.getItem('pc_save')||'{"cards":{},"sets":{}}');
-const persist=()=>localStorage.setItem('pc_save',JSON.stringify(S));
+const persist=()=>{const v=JSON.stringify(S);try{localStorage.setItem('pc_save',v)}catch(e){try{Object.keys(localStorage).filter(x=>x.startsWith('rc21:')||x.startsWith('fw3:')).forEach(x=>localStorage.removeItem(x));localStorage.setItem('pc_save',v)}catch(e2){}}};
 // Réserve : 10 boosters au départ, puis 1 booster toutes les 9 minutes (1h30 / 10), cumulables
 const PERIOD=9*60000,BATCH=1,MAXB=10;
 const TEST=false; // mode test : boosters illimités (mettre true pour désactiver la réserve)
@@ -634,6 +634,10 @@ async function pdxCards(set,nums){
  for(let i=0;i<nums.length;i+=12){const rs=await Promise.all(nums.slice(i,i+12).map(n=>{const u=mk(hit[0],hit[1],n);return probeImg(u).then(v=>v?[n,u]:null)}));rs.forEach(r=>{if(r)out[r[0]]=r[1]})}
  return out;
 }
+function cacheSet(k,v){try{localStorage.setItem(k,v);return}catch(e){}
+ try{Object.keys(localStorage).filter(x=>x.startsWith('rc21:')&&x!==k).forEach(x=>localStorage.removeItem(x));localStorage.setItem(k,v)}catch(e){}}
+// nettoyage au démarrage : les extensions mises en cache ne doivent pas saturer le stockage (sinon la sauvegarde échoue)
+(()=>{try{let t=0;const ks=Object.keys(localStorage).filter(x=>x.startsWith('rc21:'));ks.forEach(x=>t+=(localStorage.getItem(x)||'').length);if(t>2.5e6)ks.forEach(x=>localStorage.removeItem(x))}catch(e){}})();
 async function loadSet(id,prog){
  const k=`rc21:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
@@ -688,7 +692,7 @@ async function loadSet(id,prog){
     ec=(es.cards||[]).filter(c=>c.image&&isBasicEnergy({name:c.name,category:'Energy'})&&!seenE.has(c.name)&&seenE.add(c.name));
    if(ec.length){d.cards.push(...ec.slice(0,10).map(c=>({id:c.id,num:c.localId,name:c.name,img:c.image,t:0,rar:'',sub:0,sh:0,en:lg==='en'?1:0})));d.en0=Math.min(10,ec.length);d.en0f=src;break}}catch(e){}}
  }
- if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
+ if(!window._bad)cacheSet(k,JSON.stringify(d));
  return d;
 }
 // ---- Raretés : un profil par époque + taux mesurés pour certaines extensions ----
@@ -1137,7 +1141,7 @@ document.getElementById('snd').onclick=()=>{let off=false;try{off=localStorage.g
 
 async function expandAll(){
  const b=$('#dxe'),secs=[...document.querySelectorAll('#cl .dxs')].filter(x=>x.style.display!=='none'),open=window._dxo||(window._dxo=new Set());
- if(window._exp){window._exp=0;window._dxX=(window._dxX||0)+1;b.textContent='⇕ Tout déployer';open.clear();secs.forEach(sec=>{if(sec.classList.contains('open'))window._dxt(sec,false)});window.scrollTo({top:0});return}
+ if(window._exp){window._exp=0;cancelLoads();window._dxX=(window._dxX||0)+1;b.textContent='⇕ Tout déployer';open.clear();secs.forEach(sec=>{if(sec.classList.contains('open'))window._dxt(sec,false)});window.scrollTo({top:0});return}
  window._exp=1;const tok=window._dxX=(window._dxX||0)+1;b.textContent='⇕ Tout refermer';
  for(let i=0;i<secs.length;i++){if(!window._exp||window._dxX!==tok)return;if(!secs[i].classList.contains('open'))window._dxt(secs[i],true);b.textContent='⇕ Tout refermer ('+(i+1)+'/'+secs.length+')';await new Promise(r=>setTimeout(r,90))}
  if(window._exp&&window._dxX===tok)b.textContent='⇕ Tout refermer'}
@@ -1293,7 +1297,7 @@ function pickPack(i){
 }
 async function openPack(id,idx,v=0,art=''){
  const ov=$('#ov');ov.className='show';ov.dataset.pk='';
- refill();
+ cancelLoads();refill();
  if(!TEST&&S.stock.n<1){ov.innerHTML=`<div>Plus de booster pour l’instant. Prochain booster dans ${left()}.</div><button id="x">Fermer</button>`;$('#x').onclick=()=>ov.className='';return}
  ov.innerHTML='<div>Préparation du booster…</div><div class="prog"><i id="pb"></i></div>';
  let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(String(e&&e.message||e))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
@@ -1348,6 +1352,7 @@ async function openPack(id,idx,v=0,art=''){
  pb.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go()};pb.focus();
 }
 function render(){
+ cancelLoads();
  $('#tb').className=view==='b'?'on':'';$('#tc').className=view==='c'?'on':'';
  const m=$('#m');
  if(view==='b'){
@@ -1407,8 +1412,9 @@ function zoomCard(keys,k){
 }
 
 const cardHTML=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}" data-lz="1"><img src="${low(c)}" alt="${esc(c.name)}" loading="lazy"><span class="n">×${c.n}</span></div>`;
-let _lq=0;const _lw=[];
-const lim=fn=>new Promise((res,rej)=>{const run=()=>{_lq++;Promise.resolve().then(fn).then(res,rej).finally(()=>{_lq--;if(_lw.length)_lw.shift()()})};_lq<2?run():_lw.push(run)});
+let _lq=0;const _lw=[];window._lgen=0;
+const cancelLoads=()=>{window._lgen++;_lw.splice(0).forEach(f=>f(1))};
+const lim=fn=>{const g=window._lgen;return new Promise((res,rej)=>{const run=x=>{if(x||g!==window._lgen){rej(new Error('annulé'));return}_lq++;Promise.resolve().then(fn).then(res,rej).finally(()=>{_lq--;if(_lw.length)_lw.shift()()})};_lq<2?run():_lw.push(run)})};
 function dex(tabs,all,full){
  const m=$('#m'),own={};
  all.forEach(c=>{(own[c.set]=own[c.set]||[]).push(c)});
@@ -1449,7 +1455,7 @@ function dex(tabs,all,full){
   if(on&&sec._html!=null){b.innerHTML=sec._html;sec._html=null;b.style.minHeight=''}
   if(on){open.add(so.id);if(!b.innerHTML){
     if(full){b.innerHTML='<div class="msg">Chargement de toutes les cartes…</div><div class="prog"><i class="pbx"></i></div>';
-     lim(()=>loadSet(so.id,p=>{const e=b.querySelector('.pbx');if(e)e.style.width=p*100+'%'})).then(d=>{if(!sec.classList.contains('open'))return;
+     lim(()=>{const g=window._lgen;return loadSet(so.id,p=>{if(g!==window._lgen)throw new Error('annulé');const e=b.querySelector('.pbx');if(e)e.style.width=p*100+'%'})}).then(d=>{if(!sec.classList.contains('open'))return;
       const nn=c=>{const m=/^(\D*)(\d+)/.exec(String(c.num));return m?[m[1],parseInt(m[2],10)]:[String(c.num),0]};
       const cs=[...d.cards].sort((a,b)=>{const x=nn(a),y=nn(b);return x[0]===y[0]?x[1]-y[1]:(x[0]<y[0]?-1:1)});
       const tc=window._tc||(window._tc={});
