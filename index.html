@@ -319,6 +319,48 @@ header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;bac
 .stars.win{inset:11.5% 7.5% 47.5% 7.5%}
 .stars.win u{text-shadow:0 0 2px #fff,0 0 8px #9fe0ff,0 0 14px #ffd86b}
 .zr{font-size:12px;color:var(--mut);margin-top:-6px;text-align:center}
+
+/* ===== effets v2 : retour au rendu de la version test, holo seulement sur l'illustration, reverse hors illustration ===== */
+.sk,.sw{mix-blend-mode:screen}
+.sw{opacity:1}
+.sk{opacity:.8}
+.hl{--wp:50% 19.5%;--ws:85% 41%}
+.hl.w1{--wp:50% 19.8%;--ws:84% 37%}
+/* les couleurs de la carte restent visibles : brillances moins couvrantes sur les cartes secrètes / full art */
+.hl.k-tex{opacity:.6;filter:saturate(1.4)}
+.hl.k-gold{opacity:.55;filter:saturate(1.2)}
+.hl.k-rainbow{opacity:.8;filter:saturate(1.5)}
+.gr.k-tex{--go:.5;--gl:.45}.gr.k-gold{--go:.4;--gl:.7}.gr.k-rainbow{--go:.5;--gl:.6}
+/* holo : seule l'illustration brille, couleur de la brillance = couleur du Pokémon (--hc) */
+.hl.k-holo{mix-blend-mode:screen;filter:none;opacity:1;-webkit-mask:linear-gradient(#000,#000) var(--wp)/var(--ws) no-repeat;mask:linear-gradient(#000,#000) var(--wp)/var(--ws) no-repeat;
+ background:linear-gradient(115deg,transparent 14%,hsl(var(--hc,215) 95% 62%/.6) 30%,hsl(calc(var(--hc,215) + 55) 98% 70%/.75) 44%,hsl(calc(var(--hc,215) - 55) 98% 68%/.75) 58%,hsl(var(--hc,215) 95% 62%/.6) 72%,transparent 88%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 100% 82%/.6),transparent 42%);
+ background-size:260% 260%,100% 100%;background-position:var(--mx) var(--my),0 0}
+.hl.k-holo::after{mix-blend-mode:screen;opacity:.6;background:linear-gradient(110deg,transparent 38%,hsl(var(--hc,215) 100% 88%/.8) 50%,transparent 62%)}
+.gr.k-holo,.gr.k-exh{display:none}
+/* ex de l'ère ex : brillance colorée sur toute la carte + étoiles qui scintillent */
+.hl.k-exh{mix-blend-mode:screen;filter:none;opacity:1;
+ background:linear-gradient(115deg,transparent 12%,hsl(var(--hc,215) 95% 58%/.5) 28%,hsl(calc(var(--hc,215) + 60) 98% 66%/.6) 44%,hsl(calc(var(--hc,215) - 60) 98% 66%/.6) 58%,hsl(var(--hc,215) 95% 58%/.5) 74%,transparent 90%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 100% 75%/.5),transparent 40%);
+ background-size:260% 260%,100% 100%;background-position:var(--mx) var(--my),0 0}
+.hl.k-exh::after{mix-blend-mode:screen;opacity:.35;background:linear-gradient(110deg,transparent 40%,hsl(var(--hc,215) 90% 82%/.7) 50%,transparent 60%)}
+/* contour rayonnant */
+.bd.rad{padding:calc(1cqw + 1px);animation:bsp 3s linear infinite,bdp 1.2s ease-in-out infinite alternate;background:conic-gradient(from var(--ang),hsl(var(--hc,215) 95% 68%),#fff 10%,hsl(calc(var(--hc,215) + 50) 95% 65%) 24%,hsl(var(--hc,215) 95% 60%) 40%,#fff 56%,hsl(calc(var(--hc,215) - 50) 95% 65%) 72%,hsl(var(--hc,215) 95% 68%))}
+.card.t3:has(.bd.rad),.card.t4:has(.bd.rad){box-shadow:0 0 12px 1px hsl(var(--hc,215) 90% 60%/.55)}
+.stars.win u,.stars u{--hs:var(--hc,215)}
+.stars.win u{text-shadow:0 0 2px #fff,0 0 8px hsl(var(--hc,215) 100% 75%),0 0 14px hsl(var(--hc,215) 100% 60%)}
+/* reverse : brillance sur tout sauf l'illustration, plus forte ; arc-en-ciel pour les blocs ex, diamant et perle, platine */
+.hl.k-rev{mix-blend-mode:normal;filter:none;opacity:.9;
+ -webkit-mask:linear-gradient(#000,#000),linear-gradient(#000,#000) var(--wp)/var(--ws) no-repeat;-webkit-mask-composite:xor;mask:linear-gradient(#000,#000),linear-gradient(#000,#000) var(--wp)/var(--ws) no-repeat;mask-composite:exclude;
+ background:linear-gradient(115deg,transparent 12%,#8fb8ff66 30%,#ffffffcc 46%,#b6a4ff77 62%,transparent 82%);background-size:260% 260%;background-position:var(--mx) var(--my)}
+.hl.k-rev::after{mix-blend-mode:normal;opacity:.5;background:linear-gradient(110deg,transparent 40%,#ffffffb0 50%,transparent 60%)}
+.hl.k-rev.rx{opacity:.62;background:linear-gradient(115deg,#ff3fc0aa 6%,#ffb03fbb 20%,#fff04abb 32%,#5dff7dbb 44%,#3ff0ffbb 56%,#7a70ffbb 68%,#ff3fc0aa 80%,#ffb03fbb 94%);background-size:220% 220%}
+.gr.k-rev{display:none}
+/* formes qui scintillent sur les reverse (losanges, ronds) */
+.glt{position:absolute;inset:0;pointer-events:none;z-index:6;mix-blend-mode:screen}
+.glt u{position:absolute;text-decoration:none;font-size:calc(var(--z)*.45cqw);line-height:1;color:#fff;text-shadow:0 0 4px #fff,0 0 9px hsl(var(--g) 100% 70%),0 0 15px hsl(var(--g) 100% 60%);opacity:0;transform:scale(.3);animation:glt 2.2s var(--d) ease-in-out infinite}
+@keyframes glt{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
+.grid .card .glt u{animation-timing-function:steps(8)}
+body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.glt u{animation:none;opacity:.7}}
 </style>
 </head>
 <body>
@@ -449,18 +491,18 @@ async function pdxCards(set,nums){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc20:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc21:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  window._bad=0;
  const grab=async(sid,sub,a,b)=>{
   const s=await j(`${API}/${lang}/sets/${sid}`),l=(s.cards||[]).filter(c=>c.image),out=[];
   for(let i=0;i<l.length;i+=12){
    const p=await Promise.all(l.slice(i,i+12).map(async c=>{
-    let t=1,rar='',ok=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||'';ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok){t=Math.max(1,nameFloor(c.name));window._bad=1}
+    let t=1,rar='',ok=0,hv=0;for(let a=0;a<3&&!ok;a++){try{const d=await j(`${API}/${lang}/cards/${c.id}`);t=Math.max(tier(d),nameFloor(d.name));rar=d.rarity||'';hv=(d.variants&&d.variants.holo&&!d.variants.normal)?1:0;ok=1}catch(e){await new Promise(r=>setTimeout(r,300*(a+1)))}}if(!ok){t=Math.max(1,nameFloor(c.name));window._bad=1}
     const sh=/shiny|chromatique|brillant/i.test(rar)&&!/ultra/i.test(rar)?1:0;if(sh)t=3;
     if(sub)t=/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3;
     else{const off=s.cardCount&&s.cardCount.official;if(off&&parseInt(c.localId,10)>off&&t<=3)t=8}
-    return{id:c.id,num:c.localId,name:c.name,img:c.image,t,rar,sub:sub?1:0,sh}}));
+    return{id:c.id,num:c.localId,name:c.name,img:c.image,t,rar,sub:sub?1:0,sh,hv}}));
    out.push(...p);prog(a+(b-a)*out.length/l.length);
   }
   return{s,out};
@@ -482,9 +524,9 @@ async function loadSet(id,prog){
   const enImg={};enc.forEach(c=>{if(c.image)enImg[String(c.localId)]=c.image});
   const seen=new Set(),miss=[...frAll,...enc].filter(c=>!have.has(String(c.localId))&&!seen.has(String(c.localId))&&seen.add(String(c.localId)));
   for(let i=0;i<miss.length;i+=12){
-   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
-    if(d){rar=d.rarity||'';t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}
-    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:'',fb:enImg[String(c.localId)]||(c.fr?'':c.image)||'',t,rar,sub:isSub?1:0,sh:0,en:1}}));
+   const p=await Promise.all(miss.slice(i,i+12).map(async c=>{let rar='',t=3,d=null,hv=0;for(const lg of c.fr?['fr','en']:['en','fr']){try{d=await j(`${API}/${lg}/cards/${c.id}`);break}catch(e){}}
+    if(d){rar=d.rarity||'';hv=(d.variants&&d.variants.holo&&!d.variants.normal)?1:0;t=isSub?(/\b(v|vmax|vstar|gx)\b|ultra|secret|rainbow|gold/i.test(rar)?6:3):tier(d)}
+    return{id:c.id,num:c.localId,name:c.name||(d&&d.name)||'',img:'',fb:enImg[String(c.localId)]||(c.fr?'':c.image)||'',t,rar,hv,sub:isSub?1:0,sh:0,en:1}}));
    enx.push(...p);
   }
  }catch(e){enx=[]}}
@@ -711,7 +753,7 @@ function roll(d,id){
 }
 function store(cards,id,d,idx){
  S.sets[`${lang}:${id}`]={name:d.name,total:d.cards.length,idx};
- return cards.map(c=>{const k=`${lang}:${c.id}`,e=S.cards[k]||(S.cards[k]={id:c.id,lang,set:id,num:c.num,name:c.name,img:c.img,t:c.t,rar:c.rar,n:0});
+ return cards.map(c=>{const k=`${lang}:${c.id}`,e=S.cards[k]||(S.cards[k]={id:c.id,lang,set:id,num:c.num,name:c.name,img:c.img,t:c.t,rar:c.rar,hv:c.hv,n:0});
   const isNew=e.n===0;e.n++;if(c.rev)e.rev=1;return isNew});
 }
 const direct=u=>/\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(u);
@@ -835,17 +877,35 @@ const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
  return''};
 const effT=c=>{const b=effBase(c),sp=special(c);return sp==='amazing'?Math.max(b,6):sp==='shinyfa'?8:sp==='shiny'?5:b};
 const RL=c=>{const sp=special(c);return sp==='shiny'?'Chromatique':sp==='shinyfa'?'Chromatique full art':sp==='amazing'?'Rare spectaculaire':TN[effT(c)]};
+const isExEra=c=>/^ex\d/i.test(String(c.id||'')),isWiz=c=>/^(base|gym|neo|lc|ecard)/i.test(String(c.id||'')),isRvx=c=>/^(ex\d|dp\d|pl\d)/i.test(String(c.id||''));
 const holoKind=c=>{const sp=special(c);if(sp)return sp;const t=effT(c),r=String(c.rar||'').toLowerCase();
  if(t<=2)return c.rev?'rev':'';
- if(t===3)return /holo/.test(r)?'holo':(c.rev?'rev':'');
- if(t===4)return 'fa';
+ if(t===3)return (c.hv||/holo/.test(r))?'holo':(c.rev?'rev':'');
+ if(t===4)return isExEra(c)?'exh':'fa';
  if(t===5||t===7)return 'tex';
  if(t===6)return /rainbow|arc-en/.test(r)?'rainbow':'fa';
  if(t===8)return /rainbow|arc-en/.test(r)?'rainbow':'gold';
  return ''};
 const STARS=t=>{const P=[[14,12],[78,9],[48,24],[88,38],[22,46],[62,55],[10,70],[80,78],[40,86],[56,40],[30,28],[92,62]];return '<i class="sw"></i><b class="stars">'+P.slice(0,t>=8?12:8).map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.37%1.6).toFixed(2)}s;--z:${(8+i%4*4+(t>=8?4:0))}">✦</u>`).join('')+'</b>'};
 const STARSW=()=>{const P=[[12,18],[70,10],[38,42],[86,52],[20,72],[58,80],[90,24],[48,16],[30,60],[76,70]];return '<b class="stars win">'+P.map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.41%1.8).toFixed(2)}s;--z:${(8+i%3*4)}">✦</u>`).join('')+'</b>'};
-const holoHTML=c=>{const k=holoKind(c),t=effT(c);return `<i class="bd s${t}"></i>`+(t>=6&&k!=='amazing'?'<i class="sk"></i>':'')+(k==='shiny'?STARSW():'')+(t>=7?STARS(t):'')+(k?`<i class="hl k-${k}"></i><i class="gr k-${k}"></i>`:'')};
+const STARSN=(n,sz)=>{const P=[[14,12],[78,9],[48,24],[88,38],[22,46],[62,55],[10,70],[80,78],[40,86],[56,40],[30,28],[92,62]];return '<b class="stars">'+P.slice(0,n).map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.37%1.6).toFixed(2)}s;--z:${(sz+i%4*3)}">✦</u>`).join('')+'</b>'};
+const GLT=()=>{const P=[[8,6,'◆'],[90,8,'●'],[10,60,'◇'],[88,64,'◆'],[50,66,'●'],[30,78,'◆'],[72,82,'◇'],[12,92,'●'],[88,92,'◆'],[50,94,'◇']];return '<b class="glt">'+P.map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.29%1.8).toFixed(2)}s;--z:${(7+i%3*3)};--g:${(i*37)%360}">${q[2]}</u>`).join('')+'</b>'};
+// teinte : couleur dominante de l'illustration, utilisée par les brillances (variable --hc)
+const _hue={},_hq=[];let _hn=0;
+function hueOf(src){return _hue[src]||(_hue[src]=new Promise(res=>{const go=()=>{_hn++;const im=new Image();im.crossOrigin='anonymous';const end=h=>{_hn--;res(h);while(_hn<5&&_hq.length)_hq.shift()()};
+  im.onload=()=>{try{const W=24,H=34,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.drawImage(im,0,0,W,H);
+   const d=g.getImageData(Math.round(W*.1),Math.round(H*.13),Math.round(W*.8),Math.round(H*.38)).data;let r=0,gg=0,b=0,w=0;
+   for(let i=0;i<d.length;i+=4){const R=d[i],G=d[i+1],B=d[i+2],mx=Math.max(R,G,B),mn=Math.min(R,G,B),sa=mx?(mx-mn)/mx:0,wt=sa*sa*(.3+mx/255);r+=R*wt;gg+=G*wt;b+=B*wt;w+=wt}
+   if(w<1)return end(215);r/=w;gg/=w;b/=w;const mx=Math.max(r,gg,b),dd=mx-Math.min(r,gg,b);let h=0;if(dd){if(mx===r)h=((gg-b)/dd)%6;else if(mx===gg)h=(b-r)/dd+2;else h=(r-gg)/dd+4;h=Math.round(h*60);if(h<0)h+=360}
+   end(h)}catch(e){end(215)}};im.onerror=()=>end(215);im.src=src};
+  if(_hn<5)go();else _hq.push(go)}))}
+function tintCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.hc)return;
+ if(!el.querySelector('.hl.k-holo,.hl.k-exh,.hl.k-fa,.hl.k-tex,.hl.k-gold,.sw'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.hc=1;hueOf(im.src).then(h=>el.style.setProperty('--hc',h))})}
+let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>tintCards(document),250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
+const holoHTML=c=>{const k=holoKind(c),t=effT(c),wz=isWiz(c),wh=k==='holo'&&wz;
+ const sk=(t>=6&&k!=='amazing')||wh||k==='exh';
+ const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=7?STARS(t):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
+ return `<i class="bd s${t}${wh||k==='exh'?' rad':''}"></i>`+(sk?'<i class="sk"></i>':'')+st+(k==='rev'?GLT():'')+(k?`<i class="hl k-${k}${k==='rev'&&isRvx(c)?' rx':''}${wz?' w1':''}"></i><i class="gr k-${k}"></i>`:'')};
 // la lumière suit le doigt / la souris (et la carte s'incline) ; au repos, tout glisse tout seul
 (()=>{const idle=new WeakMap();
  document.addEventListener('pointermove',e=>{const el=e.target.closest&&e.target.closest('.stage,.card');if(!el||el.id==='zs')return;const r=el.getBoundingClientRect();if(!r.width)return;
@@ -1111,12 +1171,12 @@ function dex(tabs,all,full){
 let rfBusy=false;
 async function refreshRarities(){
  if(rfBusy)return;
- const todo=Object.values(S.cards).filter(c=>!c.rar&&!c.rf&&c.t!==0);
+ const todo=Object.values(S.cards).filter(c=>(!c.rar||c.hv===undefined)&&!c.rf&&c.t!==0);
  if(!todo.length)return;
  rfBusy=true;let n=0;
  const one=async c=>{
   for(const l of [c.lang,'en']){
-   try{const d=await j(`${API}/${l}/cards/${c.id}`);c.rar=d.rarity||'';c.t=c.t===0?0:tier(d);if(d.category==='Energy'&&d.energyType==='Normal')c.t=0;n++;return}catch(e){}
+   try{const d=await j(`${API}/${l}/cards/${c.id}`);c.rar=d.rarity||'';c.hv=(d.variants&&d.variants.holo&&!d.variants.normal)?1:0;c.t=c.t===0?0:tier(d);if(d.category==='Energy'&&d.energyType==='Normal')c.t=0;n++;return}catch(e){}
   }
   c.rf=1; // introuvable : on ne réessaie pas
  };
