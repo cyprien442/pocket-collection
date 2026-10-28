@@ -361,6 +361,25 @@ header{background:var(--bg)!important;-webkit-backdrop-filter:none!important;bac
 .grid .card .glt u{animation-timing-function:steps(8)}
 body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.glt u{animation:none;opacity:.7}}
+/* ===== effets v3 : la brillance éclaircit sans recolorier (color-dodge / overlay), les couleurs de la carte restent visibles ===== */
+.hl.w1{--wp:49.5% 18.1%;--ws:78.2% 38%}
+.hl.k-fa,.hl.k-tex,.hl.k-gold,.hl.k-rainbow,.hl.k-shinyfa{mix-blend-mode:color-dodge;filter:none;opacity:1;background-size:280% 280%;background-position:var(--mx) var(--my)}
+.hl.k-fa{background-image:linear-gradient(115deg,transparent 41%,#1c1c1c88 45%,#363636 50%,#1c1c1c88 55%,transparent 59%),linear-gradient(115deg,transparent 12%,#3a102838 28%,#10303a38 44%,#3a361038 60%,#103a2038 76%,transparent 90%)}
+.hl.k-tex{background-image:linear-gradient(115deg,transparent 41%,#20202088 45%,#3c3c3c 50%,#20202088 55%,transparent 59%),linear-gradient(115deg,transparent 10%,#40104a44 26%,#10404a44 42%,#4a421044 58%,#104a2844 74%,transparent 90%)}
+.hl.k-rainbow,.hl.k-shinyfa{background-image:linear-gradient(115deg,transparent 41%,#22222288 45%,#404040 50%,#22222288 55%,transparent 59%),linear-gradient(115deg,transparent 8%,#4a104850 24%,#10484a50 40%,#4a461050 56%,#134a2050 72%,transparent 90%)}
+.hl.k-gold{background-image:linear-gradient(115deg,transparent 41%,#2c241088 45%,#463a18 50%,#2c241088 55%,transparent 59%),linear-gradient(115deg,transparent 10%,#4a2a0844 30%,#4a3a1044 50%,#3a2a0844 70%,transparent 90%)}
+.hl.k-fa::after,.hl.k-tex::after,.hl.k-gold::after,.hl.k-rainbow::after,.hl.k-shinyfa::after{mix-blend-mode:soft-light;opacity:.3;background:linear-gradient(110deg,transparent 40%,#ffffffcc 50%,transparent 60%);background-size:320% 100%}
+.gr.k-tex{--go:.28;--gl:.4}.gr.k-gold{--go:.25;--gl:.5}.gr.k-rainbow{--go:.28;--gl:.45}
+.sw{mix-blend-mode:color-dodge;opacity:1;background:linear-gradient(105deg,transparent 40%,#20202077 47%,#383838 50%,#20202077 53%,transparent 60%);background-size:300% 100%}
+.t8 .sw,.fx8 .sw{background:linear-gradient(105deg,transparent 36%,#3a301488 46%,#5c4c1e 50%,#3a301488 54%,transparent 64%);background-size:300% 100%}
+/* holo : surimpression qui garde l'illustration lisible, couleur du Pokémon renforcée */
+.hl.k-holo{mix-blend-mode:overlay;filter:saturate(1.4);opacity:1;
+ background:linear-gradient(115deg,transparent 10%,hsl(var(--hc,215) 100% 55%/.8) 28%,hsl(calc(var(--hc,215) + 50) 100% 60%/.85) 44%,hsl(calc(var(--hc,215) - 50) 100% 58%/.85) 58%,hsl(var(--hc,215) 100% 55%/.8) 74%,transparent 90%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 100% 80%/.55),transparent 45%);
+ background-size:260% 260%,100% 100%;background-position:var(--mx) var(--my),0 0}
+.hl.k-holo::after{mix-blend-mode:color-dodge;opacity:.7;background:linear-gradient(110deg,transparent 40%,#3a3a3a 50%,transparent 60%);background-size:320% 100%}
+.hl.k-exh{mix-blend-mode:overlay;filter:saturate(1.3);opacity:.9}
+.hl.k-exh::after{mix-blend-mode:color-dodge;opacity:.6;background:linear-gradient(110deg,transparent 40%,#383838 50%,transparent 60%);background-size:320% 100%}
+.stars.win u,.stars u{filter:none}
 </style>
 </head>
 <body>
