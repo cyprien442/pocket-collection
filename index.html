@@ -449,7 +449,7 @@ async function pdxCards(set,nums){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc18:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc19:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  window._bad=0;
  const grab=async(sid,sub,a,b)=>{
@@ -493,10 +493,15 @@ async function loadSet(id,prog){
  enx.forEach(c=>{if(!c.img&&c.fb)c.img=c.fb;delete c.fb});
  window._dbg.miss=enx.length;window._dbg.wiki=window._fwn;enx=enx.filter(c=>c.img);window._dbg.kept=enx.length;
  const d={name:main.s.name,serie:main.s.serie&&main.s.serie.id,cards:[...main.out,...(extra?extra.out:[]),...enx]};
- // énergies de base absentes de l'extension : on prend celles de l'extension « Énergies Écarlate et Violet » (sve)
+ // énergies de base absentes de l'extension (la plupart n'en listent pas) : on prend celles de l'extension de référence de la série
  d.en0=d.cards.filter(c=>c.t===0).length;
- if(!d.en0&&lang!=='ja'){for(const lg of [lang,'en']){try{const es=await j(`${API}/${lg}/sets/sve`),ec=(es.cards||[]).filter(c=>c.image&&!/sp[ée]ci|special/i.test(c.name||''));
-   if(ec.length){d.cards.push(...ec.slice(0,12).map(c=>({id:c.id,num:c.localId,name:c.name,img:c.image,t:0,rar:'',sub:0,sh:0,en:lg==='en'?1:0})));d.en0=Math.min(12,ec.length);d.en0f=1;break}}catch(e){}}}
+ if(!d.en0&&lang!=='ja'){
+  const SRC={sm:'sm1',swsh:'swsh12.5',sv:'sve',me:'mee',xy:'xy1',bw:'bw1',dp:'dp1',pl:'dp1',hgss:'hgss1',col:'hgss1',ex:'ex1',ecard:'ecard1',neo:'neo1',gym:'gym1',base:'base1'};
+  const src=SRC[String(d.serie||'').toLowerCase()];
+  if(src)for(const lg of [lang,'en']){try{const es=await j(`${API}/${lg}/sets/${src}`),seenE=new Set(),
+    ec=(es.cards||[]).filter(c=>c.image&&isBasicEnergy({name:c.name,category:'Energy'})&&!seenE.has(c.name)&&seenE.add(c.name));
+   if(ec.length){d.cards.push(...ec.slice(0,10).map(c=>({id:c.id,num:c.localId,name:c.name,img:c.image,t:0,rar:'',sub:0,sh:0,en:lg==='en'?1:0})));d.en0=Math.min(10,ec.length);d.en0f=src;break}}catch(e){}}
+ }
  if(!window._bad){try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}}
  return d;
 }
@@ -970,7 +975,7 @@ async function openPack(id,idx,v=0,art=''){
  const sObj=sets[idx]||{id,name:d.name};
  const show=()=>{
   if(i>=pack.length){
-   ov.innerHTML=`<h2>${d.name}</h2><div style="font-size:10px;opacity:.5">énergies : ${d.en0==null?'?':d.en0}${d.en0f?' (secours)':''} · ${esc((pack.tx||'sans classeur')+' · '+pack.map(c=>(c.sl||'?')+c.t).join(' '))} · id ${esc(id)} · serie ${esc(d.serie||'?')}</div><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
+   ov.innerHTML=`<h2>${d.name}</h2><div style="font-size:10px;opacity:.5">énergies : ${d.en0==null?'?':d.en0}${d.en0f?' (secours '+d.en0f+')':''} · ${esc((pack.tx||'sans classeur')+' · '+pack.map(c=>(c.sl||'?')+c.t).join(' '))} · id ${esc(id)} · serie ${esc(d.serie||'?')}</div><div class="tag" style="color:var(--mut)">${lang!=='ja'&&SET_P[nid(id)]?'Taux relevés pour cette extension':'Taux estimés (profil de l’époque)'}</div><div class="grid" style="width:min(95vw,720px)">${pack.map((c,x)=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}">${holoHTML(c)}${news[x]?'<span class="n">Nouveau</span>':''}</div>`).join('')}</div><div><button id="again" class="bigbtn">Ouvrir un autre booster</button> <button id="x">Fermer</button></div>`;
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
   const c=Object.assign({},pack[i]);c.t=effT(c);const rest=pack.slice(i,i+4);pre(i+1);
   const tagUp=`${c.name} · ${RL(c)}${news[i]?' · Nouveau !':''}`;
