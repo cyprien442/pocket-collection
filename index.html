@@ -509,8 +509,8 @@ let S=JSON.parse(localStorage.getItem('pc_save')||'{"cards":{},"sets":{}}');
 const persist=()=>localStorage.setItem('pc_save',JSON.stringify(S));
 // Réserve : 10 boosters au départ, puis 1 booster toutes les 9 minutes (1h30 / 10), cumulables
 const PERIOD=9*60000,BATCH=1,MAXB=10;
-const TEST=true; // mode test : boosters illimités (mettre false pour remettre la réserve)
-if(!S.stock){S.stock={n:MAXB,t:Date.now()};persist()}
+const TEST=false; // mode test : boosters illimités (mettre true pour désactiver la réserve)
+if(!S.stock||!S.stockReset2){S.stock={n:MAXB,t:Date.now()};S.stockReset2=1;S.ts=Date.now();persist()} // réserve pleine (10/10), minuteur remis à zéro
 function refill(){
  if(S.stock.n>=MAXB){S.stock.n=MAXB;S.stock.t=Date.now();return}
  const k=Math.floor((Date.now()-S.stock.t)/PERIOD);
