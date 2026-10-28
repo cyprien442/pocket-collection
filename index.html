@@ -481,6 +481,7 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 @keyframes slam{0%{transform:scale(2.2) rotate(-6deg);filter:brightness(3) blur(6px);opacity:.2}35%{transform:scale(.92) rotate(1deg);filter:brightness(1.6) blur(0)}60%{transform:scale(1.06)}100%{transform:none;filter:none;opacity:1}}
 .stage.up.fx6 .dc.k0,.stage.up.fx7 .dc.k0,.stage.up.fx8 .dc.k0{animation:slam .75s cubic-bezier(.2,.9,.3,1) both}
 @media (prefers-reduced-motion:reduce){#ufx{display:none}.stage.up.fx6 .dc.k0,.stage.up.fx7 .dc.k0,.stage.up.fx8 .dc.k0{animation:none}}
+#snd{background:transparent;border:1px solid var(--line,#2a3350);border-radius:10px;padding:6px 9px;font-size:16px;line-height:1;cursor:pointer}
 </style>
 </head>
 <body>
@@ -489,6 +490,7 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
  <nav><button id="tb" class="on">Boosters</button><button id="tc">Ma collection</button></nav>
  <div id="stk" class="stk"></div>
  <button id="acc">Connexion</button>
+ <button id="snd" aria-label="Son des effets" title="Son des effets">🔊</button>
  <select id="lang" aria-label="Langue"><option value="fr">Français</option><option value="en">English</option><option value="ja">日本語</option></select>
 </header>
 <main id="m"></main>
@@ -1060,9 +1062,9 @@ function fxWav(t){if(_fxw[t])return _fxw[t];
  const sr=22050,len=Math.floor(sr*1.9),d=new Float32Array(len),notes=[784,988,1175,1568,1976].slice(0,t>=8?5:t>=7?4:3);
  let ph=0,lp=0;
  for(let i=0;i<len;i++){const x=i/sr;let v=0;
-  if(x<1){const f=36+114*Math.exp(-x*5.2);ph+=2*Math.PI*f/sr;v+=Math.sin(ph)*Math.exp(-x*4.2)*1.1}
-  if(x<.9){const n=Math.random()*2-1,al=.03+.6*Math.min(1,x/.6);lp+=al*(n-lp);v+=(n-lp)*Math.sin(Math.PI*Math.min(1,x/.9))*.6}
-  notes.forEach((fq,k)=>{const t0=.14+k*.09;if(x>=t0){const y=x-t0,at=Math.min(1,y/.012);v+=(Math.sin(2*Math.PI*fq*x)+.35*Math.sin(4*Math.PI*fq*x))*at*Math.exp(-y*3.2)*.38}});
+  if(x<1){const f=48+170*Math.exp(-x*5.2);ph+=2*Math.PI*f/sr;v+=(Math.sin(ph)+.6*Math.sin(2*ph)+.35*Math.sin(3*ph))*Math.exp(-x*4.2)*.8}
+  if(x<.9){const n=Math.random()*2-1,al=.03+.6*Math.min(1,x/.6);lp+=al*(n-lp);v+=(n-lp)*Math.sin(Math.PI*Math.min(1,x/.9))*.9}
+  notes.forEach((fq,k)=>{const t0=.14+k*.09;if(x>=t0){const y=x-t0,at=Math.min(1,y/.012);v+=(Math.sin(2*Math.PI*fq*x)+.35*Math.sin(4*Math.PI*fq*x))*at*Math.exp(-y*3)*.7}});
   d[i]=v}
  let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));const g=.92/(pk||1);
  const buf=new ArrayBuffer(44+len*2),w=new DataView(buf),ws=(o,t)=>{for(let i=0;i<t.length;i++)w.setUint8(o+i,t.charCodeAt(i))};
@@ -1078,6 +1080,9 @@ function fxPrime(){if(_fxa&&_fxa._ok)return;try{
 function fxSound(t){try{if(localStorage.getItem('fxs')==='0')return}catch(e){}
  try{if(!_fxa)fxPrime();const au=_fxa;if(au){au.muted=false;au.volume=1;au.src=fxWav(t>=8?8:t>=7?7:6);au.currentTime=0;const p=au.play();if(p&&p.catch)p.catch(()=>{})}}catch(e){}
  try{navigator.vibrate&&navigator.vibrate(t>=8?[60,40,60,40,180]:[50,30,120])}catch(e){}}
+const sndBtn=()=>{const b=document.getElementById('snd');if(!b)return;let off=false;try{off=localStorage.getItem('fxs')==='0'}catch(e){}b.textContent=off?'🔇':'🔊';b.title=off?'Son coupé (toucher pour activer)':'Son activé (toucher pour tester)'};
+document.getElementById('snd').onclick=()=>{let off=false;try{off=localStorage.getItem('fxs')==='0'}catch(e){}
+ try{localStorage.setItem('fxs',off?'1':'0')}catch(e){}sndBtn();if(off){fxPrime();fxSound(6)}};sndBtn();
 function ultraFx(t,st){
  if(!st||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
  const old=document.getElementById('ufx');if(old)old.remove();
