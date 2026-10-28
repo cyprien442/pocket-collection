@@ -542,7 +542,7 @@ function tier(c){
  if(isBasicEnergy(c)&&!/secret|secr[eè]t/i.test(String(c.rarity||'')))return 0;
  const r=(c.rarity||'none').toLowerCase().trim();
  if(r in EX)return EX[r];
- if(/hyper|secr[eè]t|rainbow|arc-en|gold|dor[eé]e?|ハイパー|シークレット/.test(r))return 8;
+ if(/hyper|secr[eè]t|magnifique|rainbow|arc-en|gold|dor[eé]e?|ハイパー|シークレット/.test(r))return 8;
  if(/gold star|holo star|rare star|\bstar\b|[ée]toile|shining|crystal|cristal/.test(r)&&!/vstar/.test(r))return 8;
  if(/illus|アート/.test(r))return /sp[eé]cia|スペシャル/.test(r)?7:5;
  if(/ultra|shiny|chromatique|full art|plein[e]? art|ウルトラ|スーパー/.test(r))return 6;
@@ -965,7 +965,7 @@ const isSec=c=>{const so=typeof sets!=='undefined'&&sets.find(x=>x.id===c.set),o
 const effBase=c=>{if(c.t===0)return 0;const t=Math.max(c.rar?tier({rarity:c.rar}):c.t,nameFloor(c.name));return t<=3&&isSec(c)?8:Math.max(t,c.t>=7?c.t:0)};
 // cartes à part : « Amazing Rare » (spectaculaire), chromatiques (shiny) et chromatiques full art
 const special=c=>{const r=String(c.rar||'').toLowerCase();if(!r)return'';
- if(/amazing|spectacul|extraordin|fantastiq|incroyable|merveill|[ée]tonnant|sublime|magnifi/.test(r))return'amazing';
+ if(/amazing|spectacul|extraordin|fantastiq|incroyable|merveill|[ée]tonnant|sublime/.test(r))return'amazing';
  if(/shiny|chromatique|brillant/.test(r))return/\b(v|vmax|vstar|gx|ex)\b|ultra|full|illus|secret|rainbow|gold/.test(r)?'shinyfa':'shiny';
  return''};
 const effT=c=>{const b=effBase(c),sp=special(c);return sp==='amazing'?Math.max(b,6):sp==='shinyfa'?8:sp==='shiny'?5:b};
