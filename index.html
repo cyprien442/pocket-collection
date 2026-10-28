@@ -611,41 +611,84 @@ function rare(T,E){
  const pool=E.holo>=1||!n.length?(h.length?h:all):(!h.length||Math.random()>E.holo?n:h);
  return pool.length?pick(pool):draw(T,3);
 }
-// Compositions propres à certaines extensions (en plus du profil de l'époque) : c communes, u peu communes, e énergies
-const PACKOV={base1:{c:4,e:2},base4:{c:4,e:2},ecard1:{c:5,u:2,e:0},ecard2:{c:5,u:2,e:0},ecard3:{c:5,u:2,e:0}};
-// « Card trick » (cardcollector.co.uk) : rang de la rare en partant du fond du paquet ; 0 = pas de méthode
+// ---- Compositions et « card trick » : classeur de l'utilisateur (ordre des cartes d'un vrai booster, de la 1re à la dernière) ----
+// C commune, U peu commune, RV reverse, R rare, E énergie, X emplacement « ultra, secrète ou commune » (blocs ex)
+const K=(...a)=>a.flatMap(([x,n])=>Array(n).fill(x));
+const MV={front:n=>ix=>ix.slice(-n).concat(ix.slice(0,-n)),back:n=>ix=>ix.slice(n).concat(ix.slice(0,n))};
+const LAYS=[
+ {ids:['base1','base2','base3','base4','base5','gym1','gym2','neo1','neo2','neo3','neo4'],o:K(['E',2],['R',1],['U',3],['C',4]),tr:MV.back(3),tx:'Les 3 premières cartes à l’arrière'},
+ {ids:['ex1'],o:K(['U',2],['RV',1],['R',1],['X',1],['C',4]),tr:MV.front(4),tx:'4 cartes à l’avant',norare:1},
+ {ids:['ex2','ex3'],o:K(['U',2],['R',1],['RV',1],['X',1],['C',4]),tr:MV.front(4),tx:'4 cartes à l’avant',norare:1},
+ {ids:['ex6','ex8','ex9','ex10','ex16'],o:K(['C',5],['RV',1],['R',1],['U',2]),tr:MV.front(2),tx:'2 cartes à l’avant'},
+ {ids:['ex15'],o:K(['RV',1],['R',1],['U',2],['C',5]),tr:MV.back(2),tx:'Les 2 premières cartes à l’arrière'},
+ {ids:['ex4','ex13','ex14'],o:K(['U',2],['RV',1],['R',1],['C',5]),tr:ix=>[ix[0],ix[1],...ix.slice(4),ix[2],ix[3]],tx:'Les 3e et 4e cartes à l’arrière'},
+ {ids:['ex5','ex12'],o:K(['RV',1],['U',2],['R',1],['C',5]),tr:ix=>[ix[1],ix[2],...ix.slice(4),ix[0],ix[3]],tx:'La 4e carte en dernier, la 1re en avant-dernier'},
+ {ids:['xy12'],o:K(['C',5],['RV',1],['R',1],['U',3]),tr:MV.front(3),tx:'3 cartes à l’avant',sec:1},
+ {series:['bw','dp','pl','hgss','col','xy'],o:K(['C',5],['RV',1],['R',1],['U',3]),tr:MV.front(3),tx:'3 cartes à l’avant'},
+ {series:['sm','swsh'],o:K(['C',5],['RV',1],['R',1],['E',1],['U',3]),tr:MV.front(4),tx:'4 cartes à l’avant'},
+ {series:['sv','me'],o:K(['C',4],['U',3],['RV',2],['R',1],['E',1]),tr:MV.front(1),tx:'1 carte à l’avant'}
+];
+const PROMO=/^(swshp|svp|smp|xyp|bwp|dpp|hgssp|basep|mep|me\d|pop|mcd|tk|det|np|cel25c|fut|sma|xya)/;
+function layoutFor(d,id){
+ if(lang==='ja')return null;const n=nid(id),sr=String(d.serie||'').toLowerCase();
+ if(PROMO.test(n)&&!/^(me\d+$)/.test(n))return null;
+ return LAYS.find(l=>(l.ids&&l.ids.includes(n))||(l.series&&!l.ids&&l.series.includes(sr)&&!(l.series.includes('xy')&&n==='xy12')))||null;
+}
+// God pack : un booster d'ultras minimum, extrêmement rare (Flamme Blanche, Foudre Noire, 151)
+const GODSET=(id,d)=>/^(sv35|sv105)/.test(nid(id))||/flamme blanche|foudre noire|white flare|black bolt|^151$|écarlate et violet\W*151|scarlet.*151/i.test(String(d.name||''));
+const GODP=1/1500;
+// « Card trick » de repli (cardcollector.co.uk) : rang de la rare en partant du fond du paquet ; 0 = pas de méthode
 const TRICK_SERIE={base:3,gym:3,neo:3,ex:3,dp:3,pl:3,hgss:3,col:3,bw:3,xy:3,sm:4,swsh:4,sv:1};
 function trickN(id,serie){if(lang==='ja')return 0;const n=nid(id),sr=String(serie||'').toLowerCase();
- if(n==='base6'||/^(swshp|svp|smp|xyp|bwp|dpp|hgssp|basep|mep|me\d)/.test(n))return 0;
+ if(n==='base6'||PROMO.test(n))return 0;
  if(n==='ecard2')return 2;if(sr==='ecard')return 3;return TRICK_SERIE[sr]||0}
+const PACKOV={ecard1:{c:5,u:2,e:0},ecard2:{c:5,u:2,e:0},ecard3:{c:5,u:2,e:0}};
 function roll(d,id){
  const shiny=SHINY.has(nid(id)),shPool=shiny?d.cards.filter(c=>c.sh&&!c.sub):[],T={},subs=d.cards.filter(c=>c.sub),SU=subOf(id);d.cards.filter(c=>!c.sub&&!(shiny&&c.sh)).forEach(c=>(T[c.t]=T[c.t]||[]).push(c));
- const E={...eraOf(d,id),...(PACKOV[nid(id)]||{})},out=[];
- const add=(f,n,rev)=>{for(let i=0;i<n;i++){let c,k=0;do{c=f()}while(out.some(o=>o.id===c.id)&&++k<8);out.push({...c,rev})}};
+ const LY=layoutFor(d,id),E={...eraOf(d,id),...(PACKOV[nid(id)]||{})},out=[];
+ const cnt=x=>LY?LY.o.filter(v=>v===x).length:0;
+ const add=(f,n,rev,sl)=>{for(let i=0;i<n;i++){let c,k=0;do{c=f()}while(out.some(o=>o.id===c.id)&&++k<8);out.push({...c,rev,sl})}};
  const cu=()=>Math.random()<.4?draw(T,2):draw(T,1);
- add(()=>draw(T,1),E.c);add(()=>draw(T,2),E.u);
- if(E.e)add(()=>draw(T,0),E.e);
+ const rv=()=>{const r=Math.random();return r<.5?draw(T,1):r<.85?draw(T,2):draw(T,3)};
+ if(LY){E.c=cnt('C');E.u=cnt('U');E.e=cnt('E')}
+ const sec=LY&&LY.sec,p8=(E.P&&E.P[8]||0)/3;
+ add(()=>draw(T,1),E.c,0,'C');
+ add(()=>sec&&T[8]&&T[8].length&&Math.random()<p8?pick(T[8]):draw(T,2),E.u,0,'U');
+ if(E.e)add(()=>draw(T,0),E.e,0,'E');
  if(E.k==='sv'){
+  if(LY&&cnt('RV')>1)add(rv,cnt('RV')-1,1,'RV');          // reverse classique
   if(shPool.length){
-   add(()=>rollTier(T,E.P,[8,7,6,5,4])||rare(T,E),1);     // emplacement rare (toutes les raretés spéciales)
-   add(()=>pick(shPool),1,1);                              // carte chromatique garantie
+   add(()=>rollTier(T,E.P,[8,7,6,5,4])||rare(T,E),1,0,'R');
+   add(()=>pick(shPool),1,1,'RV');
   }else{
-   add(()=>rollTier(T,E.P,[6,4])||rare(T,E),1);            // emplacement rare
-   add(()=>rollTier(T,E.P,[8,7,5])||cu(),1,1);             // emplacement reverse (peut contenir une illustration rare ou mieux)
+   add(()=>rollTier(T,E.P,[6,4])||rare(T,E),1,0,'R');
+   add(()=>rollTier(T,E.P,[8,7,5])||cu(),1,1,'RV');
   }
  }else if(E.k==='ja'){
-  add(()=>rollTier(T,E.P,[8,7,6,5,4])||rare(T,E),1);
+  add(()=>rollTier(T,E.P,[8,7,6,5,4])||rare(T,E),1,0,'R');
  }else{
   if(E.rev){
-   if(subs.length&&SU&&Math.random()<SU.p){const hi=subs.filter(c=>c.t>=6),lo=subs.filter(c=>c.t<6);add(()=>pick(Math.random()<SU.f&&hi.length?hi:(lo.length?lo:subs)),1,0)}
-   else add(cu,E.rev,1);
+   if(subs.length&&SU&&Math.random()<SU.p){const hi=subs.filter(c=>c.t>=6),lo=subs.filter(c=>c.t<6);add(()=>pick(Math.random()<SU.f&&hi.length?hi:(lo.length?lo:subs)),1,0,'RV')}
+   else add(cu,E.rev,1,'RV');
   }
-  add(()=>rollTier(T,E.P,[8,6,4])||rare(T,E),1);
+  if(LY&&cnt('X'))add(()=>rollTier(T,E.P,[8,4])||draw(T,1),cnt('X'),0,'X');
+  add(()=>LY&&LY.norare?rare(T,E):sec?(rollTier(T,E.P,[6,4])||rare(T,E)):(rollTier(T,E.P,[8,6,4])||rare(T,E)),1,0,'R');
  }
- const sd=out.sort((a,b)=>a.t-b.t),N=trickN(id,d.serie);
- // ordre réel d'un paquet : la rare n'est pas la dernière carte mais la N-ième en partant du fond (le « card trick » la remet en dernier)
- sd.hit=sd.length-1;sd.tn=N;
- if(N>1&&sd.length>N){const r=sd.pop();sd.splice(sd.length-(N-1),0,r);sd.hit=sd.length-N}
+ let sd=out.sort((a,b)=>a.t-b.t);
+ // god pack
+ if(LY&&GODSET(id,d)&&Math.random()<GODP){
+  const pool=[5,6,7,8].flatMap(t=>T[t]||[]),pool2=pool.length>=6?pool:[4,5,6,7,8].flatMap(t=>T[t]||[]),used=new Set();
+  if(pool2.length){sd=sd.map(c=>{if(c.t===0)return c;let x,k=0;do{x=pick(pool2)}while(used.has(x.id)&&++k<20);used.add(x.id);return{...x,rev:0,sl:c.sl}});sd.gp=1}
+ }
+ if(LY){
+  const q={};sd.forEach(c=>(q[c.sl]=q[c.sl]||[]).push(c));
+  const ord=LY.o.map(sl=>(q[sl]||[]).shift()).filter(Boolean);Object.values(q).forEach(a=>ord.push(...a));
+  if(sd.gp)ord.gp=1;
+  ord.tr=sd.gp?null:LY.tr;ord.tx=LY.tx;return ord;
+ }
+ // sans classeur : la rare est la N-ième carte en partant du fond (le « card trick » la remet en dernière)
+ const N=trickN(id,d.serie);if(sd.gp)sd.tr=null;
+ if(N>1&&sd.length>N&&!sd.gp){const hit=sd.length-N,r=sd.pop();sd.splice(hit,0,r);sd.tr=ix=>ix.slice(hit+1).concat(ix.slice(0,hit+1));sd.tx='La rare est remise en dernier'}
  return sd;
 }
 function store(cards,id,d,idx){
@@ -918,10 +961,10 @@ async function openPack(id,idx,v=0,art=''){
    $('#again').onclick=()=>openPack(id,idx,v,art);ov.querySelector('.grid').onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...ov.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)};$('#x').onclick=()=>{ov.className='';render()};return}
   const c=Object.assign({},pack[i]);c.t=effT(c);const rest=pack.slice(i,i+4);pre(i+1);
   const tagUp=`${c.name} · ${RL(c)}${news[i]?' · Nouveau !':''}`;
-  const ctb=pack.tn>1&&!trick&&i===0?'<button id="ct" class="ct" type="button">Card trick</button>':'';
+  const ctb=pack.tr&&!trick&&i===0?'<button id="ct" class="ct" type="button">Card trick</button>':'';
   ov.innerHTML=`<div class="stage deck${up?' up':''}${up&&c.t>=3?' fx'+c.t:''}" id="st" style="--bc:var(--b${c.t})" tabindex="0"><div class="dk">${rest.map((x,k)=>`<div class="dc k${k}" style="--k:${k};--bc:var(--b${x.t})"><div class="back"></div><div class="front"><img src="${k>1?low(x):high(x)}" alt="${esc(x.name)}"${k>1?' decoding="async"':' decoding="sync" fetchpriority="high"'}>${k?`<i class="bd lite s${effT(x)}"></i>`:holoHTML(x)}</div></div>`).reverse().join('')}</div></div>
-  <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>${ctb}${trick&&i===0?'<div class="tag" style="font-size:13px;color:var(--mut)">Card trick appliqué : la rare arrive en dernier</div>':''}`;
-  const ctn=$('#ct');if(ctn)ctn.onclick=e=>{e.stopPropagation();const h=pack.hit,pm=[...pack.keys()],np=pm.slice(h+1).concat(pm.slice(0,h+1));pack=np.map(x=>pack[x]);news=np.map(x=>news[x]);trick=true;pre(0);show()};
+  <div class="tag" id="tg" style="color:var(--b${c.t})">${up?tagUp:`Paquet de ${pack.length} cartes${pack.gp?' · GOD PACK !':''}`}</div><div class="tag" id="hn" style="font-size:13px">${up?'Fais glisser la carte sur le côté':'Touche le paquet pour le retourner'}</div>${ctb}${trick&&i===0?'<div class="tag" style="font-size:13px;color:var(--mut)">Card trick appliqué : '+esc(pack.tx||'')+'</div>':''}`;
+  const ctn=$('#ct');if(ctn)ctn.onclick=e=>{e.stopPropagation();const tr=pack.tr,tx=pack.tx,np=tr([...pack.keys()]);const gp=pack.gp;pack=np.map(x=>pack[x]);news=np.map(x=>news[x]);pack.tx=tx;pack.gp=gp;trick=true;pre(0);show()};
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
   const next=dir=>{if(busy)return;busy=true;top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
