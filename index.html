@@ -395,6 +395,8 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 .gr.k-tex{--go:.4;--gl:.7}.gr.k-gold{--go:.35;--gl:.8}.gr.k-rainbow{--go:.4;--gl:.75}
 .sw{background:linear-gradient(105deg,transparent 38%,#24242488 46%,#505050 50%,#24242488 54%,transparent 62%);background-size:300% 100%}
 .t8 .sw,.fx8 .sw{background:linear-gradient(105deg,transparent 36%,#3a301499 46%,#6a561f 50%,#3a301499 54%,transparent 64%);background-size:300% 100%}
+/* cartes paysage (Légendes, BREAK…) : brillance sur toute la carte */
+.land .hl.k-holo,.land .hl.k-shiny,.land .hl.k-rev{-webkit-mask:none;mask:none;-webkit-mask-composite:initial;mask-composite:initial}
 </style>
 </head>
 <body>
@@ -946,7 +948,10 @@ function kindOf(src){return _kd[src]||(_kd[src]=new Promise(res=>{const go=()=>{
   if(_hn<5)go();else _hq.push(go)}))}
 function kindCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.kk)return;const hl=el.querySelector('.bd.s8')&&el.querySelector('.hl.k-tex,.hl.k-gold,.hl.k-rainbow');if(!hl||!/^[^:]*:(?!sv|me)/i.test(el.dataset.k||'x:x'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.kk=1;
  kindOf(im.src).then(k=>{if(!k)return;el.querySelectorAll('.hl,.gr').forEach(x=>{x.className=x.className.replace(/k-(tex|gold|rainbow)/,'k-'+k)})})})}
-let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{tintCards(document);kindCards(document)},250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
+function landChk(im){try{if(!im||!im.naturalWidth)return;const el=im.closest('.card,.dc>.front');if(el)el.classList.toggle('land',im.naturalWidth>im.naturalHeight*1.05)}catch(e){}}
+document.addEventListener('load',e=>{if(e.target&&e.target.tagName==='IMG')landChk(e.target)},true);
+function landCards(root){(root||document).querySelectorAll('.card[data-k] img,.dc>.front img').forEach(im=>{if(im.complete)landChk(im)})}
+let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{tintCards(document);kindCards(document);landCards(document)},250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 const holoHTML=c=>{const k=holoKind(c),t=effT(c),wz=isWiz(c),wh=k==='holo'&&wz;
  const sk=(t>=6&&k!=='amazing')||wh||k==='exh';
  const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=7?STARS(t):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
