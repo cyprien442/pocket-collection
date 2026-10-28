@@ -970,7 +970,7 @@ const holoKind=c=>{const sp=special(c);if(sp)return sp;const t=effT(c),r=String(
  if(t===3)return (c.hv||/holo/.test(r))?'holo':(c.rev?'rev':'');
  if(t===4)return isExEra(c)?'exh':'fa';
  if(t===5||t===7)return 'tex';
- if(t===6)return /rainbow|arc-en/.test(r)?'rainbow':'fa';
+ if(t===6)return /rainbow|arc-en/.test(r)?'rainbow':'tex';
  if(t===8)return /rainbow|arc-en/.test(r)?'rainbow':/hyper|gold|crown|couronne|\bor\b/.test(r)||/^(sv|me)/i.test(String(c.id||''))?'gold':'tex';
  return ''};
 const STARS=t=>{const P=[[14,12],[78,9],[48,24],[88,38],[22,46],[62,55],[10,70],[80,78],[40,86],[56,40],[30,28],[92,62]];return '<i class="sw"></i><b class="stars">'+P.slice(0,t>=8?12:8).map((q,i)=>`<u style="left:${q[0]}%;top:${q[1]}%;--d:${(i*.37%1.6).toFixed(2)}s;--z:${(8+i%4*4+(t>=8?4:0))}">✦</u>`).join('')+'</b>'};
@@ -1005,7 +1005,7 @@ function landCards(root){(root||document).querySelectorAll('.card[data-k] img,.d
 let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{tintCards(document);kindCards(document);landCards(document)},250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 const holoHTML=c=>{const k=holoKind(c),t=effT(c),wz=isWiz(c),wh=k==='holo'&&wz;
  const sk=(t>=6&&k!=='amazing')||wh||k==='exh';
- const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=7?STARS(t):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
+ const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=6?STARS(Math.max(t,8)):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
  return `<i class="bd s${t}${wh||k==='exh'?' rad':''}"></i>`+(sk?'<i class="sk"></i>':'')+st+(k==='rev'?GLT():'')+(k?`<i class="hl k-${k}${k==='rev'&&isRvx(c)?' rx':''}${wz?' w1':''}${/l[ée]gende|legend/i.test((c.name||'')+' '+(c.rar||''))?' lg':''}"></i><i class="gr k-${k}"></i>`:'')};
 // la lumière suit le doigt / la souris (et la carte s'incline) ; au repos, tout glisse tout seul
 (()=>{const idle=new WeakMap();
@@ -1205,7 +1205,7 @@ function zoomCard(keys,k){
  const draw=()=>{
   const c=S.cards[keys[i]]||(window._tc||{})[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))">${t>=7?`<i class="rays k-${holoKind(c)||'tex'}"></i>`:''}<div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
+  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))">${t>=6?`<i class="rays k-${holoKind(c)||'tex'}"></i>`:''}<div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
   const mv=e=>{const r=zs.getBoundingClientRect(),x=Math.min(1.2,Math.max(-.2,(e.clientX-r.left)/r.width)),y=Math.min(1.2,Math.max(-.2,(e.clientY-r.top)/r.height));
    zs.style.setProperty('--tx',((x-.5)*70).toFixed(1)+'deg');zs.style.setProperty('--ty',((.5-y)*55).toFixed(1)+'deg');zs.style.setProperty('--mx',(x*100).toFixed(1)+'%');zs.style.setProperty('--my',(y*100).toFixed(1)+'%')};
