@@ -1315,11 +1315,13 @@ function collection(){
  if(!all.length){m.innerHTML=tabs+'<div class="msg">Aucune carte pour l’instant. Ouvre un booster dans l’onglet Boosters.</div>';bindTabs();return}
  const sort=window._sort||'set',fs=window._fs||'';
  const ids=[...new Set(all.map(c=>c.set))];
- m.innerHTML=tabs+`<div class="bar"><select id="so"><option value="set">Trier par extension</option><option value="rar">Trier par rareté</option><option value="alpha">Trier par ordre alphabétique</option></select><select id="fs"><option value="">Toutes les extensions</option>${ids.map(i=>`<option value="${i}">${S.sets[lang+':'+i].name}</option>`).join('')}</select></div><div id="cl"></div>`;
+ m.innerHTML=tabs+`<div class="bar"><input id="mq" type="search" placeholder="Rechercher une extension" value="${esc(window._mq||'')}" autocomplete="off"><select id="so"><option value="set">Trier par extension</option><option value="rar">Trier par rareté</option><option value="alpha">Trier par ordre alphabétique</option></select><select id="fs"><option value="">Toutes les extensions</option>${ids.map(i=>`<option value="${i}">${S.sets[lang+':'+i].name}</option>`).join('')}</select></div><div id="cl"></div>`;
  bindTabs();$('#so').value=sort;$('#fs').value=fs;
  $('#so').onchange=e=>{window._sort=e.target.value;collection()};$('#fs').onchange=e=>{window._fs=e.target.value;collection()};
  const card=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}" loading="lazy">${holoHTML(c)}<span class="n">×${c.n}</span></div>`;
- let cs=fs?all.filter(c=>c.set===fs):all;
+ const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const paint=()=>{const v=nz(window._mq);let cs=(fs?all.filter(c=>c.set===fs):all).filter(c=>!v||nz((S.sets[lang+':'+c.set]||{}).name).includes(v)||nz(c.set).includes(v));
+ if(!cs.length){$('#cl').innerHTML='<div class="msg">Aucune extension trouvée.</div>';return}
  if(sort==='set'){
   const by={};cs.forEach(c=>(by[c.set]=by[c.set]||[]).push(c));
   $('#cl').innerHTML=Object.keys(by).sort((a,b)=>S.sets[lang+':'+a].idx-S.sets[lang+':'+b].idx).map(id=>{const s=S.sets[lang+':'+id];
@@ -1328,6 +1330,8 @@ function collection(){
   cs=[...cs].sort(sort==='rar'?(a,b)=>b.t-a.t||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));
   $('#cl').innerHTML=`<div class="grid">${cs.map(card).join('')}</div>`;
  }
+ };
+ paint();$('#mq').oninput=e=>{window._mq=e.target.value;paint()};
 }
 // Outil de contrôle : ouvre le site avec #diag à la fin de l'adresse pour lister les extensions sans booster ou sans logo
 async function diag(){
