@@ -421,6 +421,14 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 @keyframes rsp{to{rotate:360deg}}
 @keyframes rpl{from{opacity:.55;scale:.96}to{opacity:.95;scale:1.04}}
 @media (prefers-reduced-motion:reduce){.rays{animation:none;opacity:.7}}
+/* rayons v2 : plus petits, collés à la carte, plus lumineux */
+.rays{width:190%;aspect-ratio:63/88;border-radius:0;filter:brightness(1.35) saturate(1.15) drop-shadow(0 0 8px #fff8);mix-blend-mode:screen;
+ -webkit-mask-image:repeating-conic-gradient(#000 0 3.2deg,transparent 3.2deg 9deg),radial-gradient(ellipse closest-side,transparent 48%,#000 53%,#000 64%,#000a 80%,transparent 100%);
+ mask-image:repeating-conic-gradient(#000 0 3.2deg,transparent 3.2deg 9deg),radial-gradient(ellipse closest-side,transparent 48%,#000 53%,#000 64%,#000a 80%,transparent 100%)}
+.rays.k-gold{background:conic-gradient(#ffe27a,#fff8d0,#ffc93c,#fff4b8,#ffe27a)}
+.rays.k-tex,.rays.k-fa{background:conic-gradient(#ffffff,#fff0c0,#ffffff,#fff0c0,#ffffff)}
+.rays.k-rainbow{background:conic-gradient(#ff6fd8,#ffbb55,#fff45a,#6dff8d,#4ff4ff,#8a80ff,#ff6fd8)}
+@keyframes rpl{from{opacity:.75}to{opacity:1}}
 </style>
 </head>
 <body>
