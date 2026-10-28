@@ -342,6 +342,7 @@ let S=JSON.parse(localStorage.getItem('pc_save')||'{"cards":{},"sets":{}}');
 const persist=()=>localStorage.setItem('pc_save',JSON.stringify(S));
 // Réserve : 10 boosters au départ, puis 1 booster toutes les 9 minutes (1h30 / 10), cumulables
 const PERIOD=9*60000,BATCH=1,MAXB=10;
+const TEST=true; // mode test : boosters illimités (mettre false pour remettre la réserve)
 if(!S.stock){S.stock={n:MAXB,t:Date.now()};persist()}
 function refill(){
  if(S.stock.n>=MAXB){S.stock.n=MAXB;S.stock.t=Date.now();return}
@@ -349,7 +350,7 @@ function refill(){
  if(k>0){S.stock.n=Math.min(MAXB,S.stock.n+BATCH*k);S.stock.t=S.stock.n>=MAXB?Date.now():S.stock.t+k*PERIOD;persist()}
 }
 function left(){const s=Math.max(0,Math.ceil((S.stock.t+PERIOD-Date.now())/1000));return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function tick(){refill();$('#stk').innerHTML=S.stock.n>=MAXB?`<b>${S.stock.n}/${MAXB}</b> boosters · réserve pleine`:`<b>${S.stock.n}/${MAXB}</b> boosters · prochain dans ${left()}`}
+function tick(){refill();if(TEST){$('#stk').innerHTML='<b>Mode test</b> · boosters illimités';return}$('#stk').innerHTML=S.stock.n>=MAXB?`<b>${S.stock.n}/${MAXB}</b> boosters · réserve pleine`:`<b>${S.stock.n}/${MAXB}</b> boosters · prochain dans ${left()}`}
 setInterval(tick,1000);
 // ---- Compte et synchronisation (Supabase) ----
 const SB_URL='https://kejgcyrgzzfhiolfucdi.supabase.co',SB_KEY='sb_publishable_Vpxlq-xqq1PrLR0lh0iXPg_A7bj6sG-';
@@ -960,11 +961,11 @@ function pickPack(i){
 async function openPack(id,idx,v=0,art=''){
  const ov=$('#ov');ov.className='show';ov.dataset.pk='';
  refill();
- if(S.stock.n<1){ov.innerHTML=`<div>Plus de booster pour l’instant. Prochain booster dans ${left()}.</div><button id="x">Fermer</button>`;$('#x').onclick=()=>ov.className='';return}
+ if(!TEST&&S.stock.n<1){ov.innerHTML=`<div>Plus de booster pour l’instant. Prochain booster dans ${left()}.</div><button id="x">Fermer</button>`;$('#x').onclick=()=>ov.className='';return}
  ov.innerHTML='<div>Préparation du booster…</div><div class="prog"><i id="pb"></i></div>';
  let d;try{d=await loadSet(id,p=>$('#pb').style.width=p*100+'%')}catch(e){ov.innerHTML='<div>Impossible de charger cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(String(e&&e.message||e))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
  if(!d.cards.length){ov.innerHTML='<div>Aucune carte illustrée pour cette extension.</div><div style="font-size:11px;opacity:.7;margin:6px">diag : '+esc(JSON.stringify(window._dbg||{}))+'</div><button id="x">Fermer</button>';$('#x').onclick=()=>ov.className='';return}
- S.stock.n--;let pack=roll(d,id),news=store(pack,id,d,idx),trick=false;S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
+ if(!TEST)S.stock.n--;let pack=roll(d,id),news=store(pack,id,d,idx),trick=false;S.ts=Date.now();persist();tick();push();const pre=n=>{for(let q=n;q<n+2&&q<pack.length;q++){const im=new Image();im.decoding='async';im.src=high(pack[q])}};pre(0);
  let i=0,up=false;
  const sObj=sets[idx]||{id,name:d.name};
  const show=()=>{
