@@ -1074,15 +1074,17 @@ function fxWav(t){if(_fxw[t])return _fxw[t];
  ws(0,'RIFF');w.setUint32(4,36+len*2,true);ws(8,'WAVE');ws(12,'fmt ');w.setUint32(16,16,true);w.setUint16(20,1,true);w.setUint16(22,1,true);w.setUint32(24,sr,true);w.setUint32(28,sr*2,true);w.setUint16(32,2,true);w.setUint16(34,16,true);ws(36,'data');w.setUint32(40,len*2,true);
  for(let i=0;i<len;i++)w.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]*g))*32767,true);
  return _fxw[t]=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
-const _sfxu={};
+const _sfxu={};/* v2 */
 function sfxUrl(name){if(_sfxu[name])return _sfxu[name];
- const sr=22050,D={tear:.8,swipe:.3,flip:.2}[name],len=Math.floor(sr*D),d=new Float32Array(len);let lp=0,lp2=0,ph=0;
+ const sr=22050,D={tear:.95,swipe:.34,flip:.2}[name],len=Math.floor(sr*D),d=new Float32Array(len);let lp=0,lp2=0,ph=0;
  for(let i=0;i<len;i++){const x=i/sr,n=Math.random()*2-1;let v=0;
-  if(name==='tear'){lp+=.18*(n-lp);const hp=n-lp,gate=Math.sin(x*190)>-.35?1:.35;v=hp*gate*(.55+.45*Math.random())*Math.exp(-x*2.6)*(1-Math.exp(-x*90))*1.1;
-   v+=Math.sin(2*Math.PI*170*x)*Math.exp(-x*38)*.9;
-   if(x>.5){lp2+=.07*(n-lp2);v+=lp2*Math.sin(Math.PI*Math.min(1,(x-.5)/.28))*.9}}
-  else if(name==='swipe'){const a=.05+.5*Math.sin(Math.PI*Math.min(1,x/D));lp+=a*(n-lp);v=(n-lp)*Math.pow(Math.sin(Math.PI*Math.min(1,x/D)),1.5)*1.1+Math.sin(2*Math.PI*1100*x)*Math.exp(-x*90)*.25}
-  else{v=Math.sin(2*Math.PI*120*x)*Math.exp(-x*22)*.9+n*Math.exp(-x*120)*.5}
+  if(name==='tear'){lp+=.25*(n-lp);const hp=n-lp,jit=.5+.5*Math.abs(Math.sin(x*260+Math.sin(x*35)*3));
+   const rip=x<.45?hp*Math.min(1,x/.02)*Math.pow(1-x/.45,.7)*jit*1.1:0;
+   ph=ph*.8+(Math.random()<.12?(Math.random()*2-1)*1.6:0);
+   v=rip+ph*.7*Math.exp(-x*3.2)+Math.sin(2*Math.PI*220*x)*Math.exp(-x*45)*.5;
+   if(x>.3){lp2+=.1*(n-lp2);v+=lp2*Math.sin(Math.PI*Math.min(1,(x-.3)/.55))*.55}}
+  else if(name==='swipe'){const e=Math.pow(Math.sin(Math.PI*Math.min(1,x/D)),2);lp+=.06*(n-lp);lp2+=.12*(lp-lp2);v=lp2*e*2.2}
+  else{v=Math.sin(2*Math.PI*95*x)*Math.exp(-x*20)*.8+(n-lp)*Math.exp(-x*140)*.15;lp+=.2*(n-lp)}
   d[i]=v}
  let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));const g=.9/(pk||1);
  const buf=new ArrayBuffer(44+len*2),w=new DataView(buf),ws=(o,t)=>{for(let i=0;i<t.length;i++)w.setUint8(o+i,t.charCodeAt(i))};
@@ -1260,8 +1262,8 @@ async function openPack(id,idx,v=0,art=''){
   const ctn=$('#ct');if(ctn)ctn.onclick=e=>{e.stopPropagation();const tr=pack.tr,tx=pack.tx,np=tr([...pack.keys()]);const gp=pack.gp;pack=np.map(x=>pack[x]);news=np.map(x=>news[x]);pack.tx=tx;pack.gp=gp;trick=true;pre(0);show()};
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
-  const next=dir=>{if(busy)return;busy=true;sfx('swipe');top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
-  const flipDeck=async()=>{if(busy)return;busy=true;sfx('flip');const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const next=dir=>{if(busy)return;busy=true;sfx('swipe',.4);top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
+  const flipDeck=async()=>{if(busy)return;busy=true;sfx('flip',.45);const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
    const im=top.querySelector('img');if(im&&!(im.complete&&im.naturalWidth>0)){$('#hn').textContent='Chargement de la carte…';await Promise.race([new Promise(r=>{im.addEventListener('load',r,{once:true});im.addEventListener('error',r,{once:true})}),new Promise(r=>setTimeout(r,4000))])}
    try{if(im&&im.decode)await im.decode()}catch(e){}
    const fin=()=>{up=true;st.classList.add('up');dk.classList.remove('f1');dk.classList.add('f2');$('#tg').innerHTML=tagUp;$('#tg').style.color=`var(--b${c.t})`;$('#hn').textContent='Fais glisser la carte sur le côté';revealFx(c.t,st);busy=false};
