@@ -501,6 +501,8 @@ html.bg *,html.bg *::before,html.bg *::after{animation-play-state:paused!importa
 body::before,body::after{animation:none!important}
 .grid .card .hl,.grid .card .hl::after,.grid .card .sw,.grid .card .stars u{will-change:auto}
 .grid .card.anim .bd,.grid .card.anim .sk{animation-duration:6s,3s!important}
+#asf{position:fixed;right:14px;bottom:72px;z-index:26;width:46px;height:46px;border-radius:50%;border:1px solid #ffffff40;background:#3b2a8ce6;color:#fff;font-size:18px;line-height:1;box-shadow:0 4px 16px #000a;cursor:pointer}
+#asf[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -1138,17 +1140,20 @@ async function expandAll(){
  window._exp=1;const tok=window._dxX=(window._dxX||0)+1;b.textContent='⇕ Tout refermer';
  for(let i=0;i<secs.length;i++){if(!window._exp||window._dxX!==tok)return;if(!secs[i].classList.contains('open'))window._dxt(secs[i],true);b.textContent='⇕ Tout refermer ('+(i+1)+'/'+secs.length+')';await new Promise(r=>setTimeout(r,90))}
  if(window._exp&&window._dxX===tok)b.textContent='⇕ Tout refermer'}
+function lab(){const t=window._as?'⏸':'▶';document.querySelectorAll('#dxs,#asf').forEach(x=>x.textContent=x.id==='asf'?t:(window._as?'⏸ Stop':'▶ Défiler'))}
 function autoScroll(){
  const b=$('#dxs');
- if(window._as){window._as=0;if(b)b.textContent='▶ Défiler';return}
- window._as=1;if(b)b.textContent='⏸ Stop';let last=performance.now(),still=0;
- const stop=()=>{window._as=0;const bb=$('#dxs');if(bb)bb.textContent='▶ Défiler';['wheel','touchstart','keydown'].forEach(e=>removeEventListener(e,stop))};
- ['wheel','touchstart','keydown'].forEach(e=>addEventListener(e,stop,{passive:true,once:true}));
+ if(window._as){window._as=0;lab();return}
+ window._as=1;lab();let last=performance.now(),still=0;
+ const stop=()=>{window._as=0;lab();['wheel','touchstart','keydown'].forEach(e=>removeEventListener(e,stop))};
+ ['wheel','touchstart','keydown'].forEach(e=>addEventListener(e,ev=>{if(ev.target&&ev.target.closest&&ev.target.closest('#asf,#dxs'))return;stop()},{passive:true,once:true}));
  const step=now=>{if(!window._as){stop();return}const dt=Math.min(.05,(now-last)/1000);last=now;const y0=scrollY;window.scrollBy(0,900*dt);
   if(Math.abs(scrollY-y0)<.5){still+=dt;if(still>1.8&&!window._exp){stop();return}}else still=0;requestAnimationFrame(step)};
  requestAnimationFrame(step)}
 // bouton « haut de page » sur toutes les pages
-(()=>{const u=document.createElement('button');u.id='up';u.setAttribute('aria-label','Remonter en haut');u.textContent='↑';u.hidden=true;document.body.appendChild(u);
+(()=>{const f=document.createElement('button');f.id='asf';f.setAttribute('aria-label','Défilement automatique');f.textContent='▶';f.hidden=true;f.onclick=()=>autoScroll();document.body.appendChild(f);
+ const vis=()=>{f.hidden=!document.querySelector('#cl .dxs');lab()};setInterval(vis,700);
+ const u=document.createElement('button');u.id='up';u.setAttribute('aria-label','Remonter en haut');u.textContent='↑';u.hidden=true;document.body.appendChild(u);
  const chk=()=>{const o=$('#ov'),ovp=o&&o.className&&o.scrollTop>300;u.hidden=!(scrollY>300||ovp)};
  addEventListener('scroll',chk,{passive:true});$('#ov').addEventListener('scroll',chk,{passive:true});
  u.onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});const o=$('#ov');if(o)o.scrollTo({top:0,behavior:'smooth'})};})();
