@@ -429,6 +429,11 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 .rays.k-tex,.rays.k-fa{background:conic-gradient(#ffffff,#fff0c0,#ffffff,#fff0c0,#ffffff)}
 .rays.k-rainbow{background:conic-gradient(#ff6fd8,#ffbb55,#fff45a,#6dff8d,#4ff4ff,#8a80ff,#ff6fd8)}
 @keyframes rpl{from{opacity:.75}to{opacity:1}}
+/* rayons v3 : très fins, dépassent juste un peu de la carte */
+.rays{width:142%;
+ -webkit-mask-image:repeating-conic-gradient(#000 0 .9deg,transparent .9deg 3.6deg),radial-gradient(ellipse closest-side,transparent 74%,#000 77%,#000c 88%,transparent 100%);
+ mask-image:repeating-conic-gradient(#000 0 .9deg,transparent .9deg 3.6deg),radial-gradient(ellipse closest-side,transparent 74%,#000 77%,#000c 88%,transparent 100%);
+ filter:brightness(1.5) saturate(1.1) drop-shadow(0 0 4px #fff9)}
 </style>
 </head>
 <body>
