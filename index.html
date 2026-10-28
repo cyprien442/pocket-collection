@@ -443,6 +443,11 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
  mask-image:repeating-conic-gradient(#000 0 .9deg,transparent .9deg 3.6deg),radial-gradient(circle closest-side,transparent 46%,#000 58%,#000 74%,#0008 88%,transparent 100%)}
 /* rayons v5 : jaune très lumineux pour tous les types */
 .rays,.rays.k-gold,.rays.k-tex,.rays.k-fa,.rays.k-rainbow{background:conic-gradient(#fff36a,#ffe02e,#fff9a0,#ffd400,#fff36a);filter:brightness(1.9) saturate(1.3) drop-shadow(0 0 6px #ffe94dcc) drop-shadow(0 0 14px #ffd400aa)}
+/* holo & ex de l'ère ex : forte brillance qui éclaircit sans changer la couleur de la carte */
+.hl.k-holo,.hl.k-exh{mix-blend-mode:color-dodge;filter:none;opacity:1;background-size:230% 230%,100% 100%;background-position:var(--mx) var(--my),0 0;
+ background-image:linear-gradient(115deg,transparent 30%,#2c2c2caa 40%,#6a6a6a 50%,#2c2c2caa 60%,transparent 70%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 70% 22%/.7),transparent 45%)}
+.hl.k-holo::after,.hl.k-exh::after{mix-blend-mode:color-dodge;opacity:.8;background:linear-gradient(110deg,transparent 38%,#444 50%,transparent 62%);background-size:320% 100%}
+.hl.k-exh{background-image:linear-gradient(115deg,transparent 36%,#22222299 43%,#444 50%,#22222299 57%,transparent 64%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 70% 18%/.55),transparent 40%)}
 </style>
 </head>
 <body>
