@@ -404,7 +404,7 @@ function isBasicEnergy(c){
 }
 function tier(c){
  const nm=String(c.name||''),cg=String(c.category||'');
- if(isBasicEnergy(c))return 0;
+ if(isBasicEnergy(c)&&!/secret|secr[eè]t/i.test(String(c.rarity||'')))return 0;
  const r=(c.rarity||'none').toLowerCase().trim();
  if(r in EX)return EX[r];
  if(/hyper|secr[eè]t|rainbow|arc-en|gold|dor[eé]e?|ハイパー|シークレット/.test(r))return 8;
@@ -449,7 +449,7 @@ async function pdxCards(set,nums){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc19:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc20:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  window._bad=0;
  const grab=async(sid,sub,a,b)=>{
@@ -646,7 +646,7 @@ const LAYS=[
  {series:['sm','swsh'],o:K(['C',5],['RV',1],['R',1],['E',1],['U',3]),tr:MV.front(4),tx:'4 cartes à l’avant'},
  {series:['sv','me'],o:K(['C',4],['U',3],['RV',2],['R',1],['E',1]),tr:MV.front(1),tx:'1 carte à l’avant'}
 ];
-const PROMO=/^(swshp|svp|smp|xyp|bwp|dpp|hgssp|basep|mep|me\d|pop|mcd|tk|det|np|cel25c|fut|sma|xya)/;
+const PROMO=/^(swshp|svp|smp|xyp|bwp|dpp|hgssp|basep|mep|me\d|pop|mcd|tk|det|np|cel25c|fut|sma|xya|mfb|sve$|mee$|30th-c)/;
 function layoutFor(d,id){
  if(lang==='ja')return null;const n=nid(id),sr=String(d.serie||'').toLowerCase();
  if(PROMO.test(n)&&!/^(me\d+$)/.test(n))return null;
