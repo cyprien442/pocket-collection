@@ -437,6 +437,10 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 /* paquet face visible : on ne voit que la carte du dessus, les suivantes restent cachées derrière */
 .deck.up .dc:not(.k0){transform:none;box-shadow:none}
 .deck.up .dc:not(.k0)>.front{visibility:hidden}
+/* rayons v4 : cercle parfait autour de la carte */
+.rays{width:190%;aspect-ratio:1;border-radius:50%;filter:brightness(1.7) saturate(1.1) drop-shadow(0 0 4px #fffb);
+ -webkit-mask-image:repeating-conic-gradient(#000 0 .9deg,transparent .9deg 3.6deg),radial-gradient(circle closest-side,transparent 40%,#000 50%,#000 70%,#0008 86%,transparent 100%);
+ mask-image:repeating-conic-gradient(#000 0 .9deg,transparent .9deg 3.6deg),radial-gradient(circle closest-side,transparent 40%,#000 50%,#000 70%,#0008 86%,transparent 100%)}
 </style>
 </head>
 <body>
