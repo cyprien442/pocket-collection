@@ -1042,7 +1042,7 @@ function zoomCard(keys,k){
  document.body.classList.add('zo');const close=()=>{document.body.classList.remove('zo');z.remove();document.removeEventListener('keydown',kd);if(prevFocus&&prevFocus.focus)prevFocus.focus()};
  const prevFocus=document.activeElement;
  const draw=()=>{
-  const c=S.cards[keys[i]];if(!c){close();return}
+  const c=S.cards[keys[i]]||(window._tc||{})[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
   z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
@@ -1063,7 +1063,7 @@ function zoomCard(keys,k){
 }
 
 const cardHTML=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${esc(c.name)}" loading="lazy">${holoHTML(c)}<span class="n">×${c.n}</span></div>`;
-function dex(tabs,all){
+function dex(tabs,all,full){
  const m=$('#m'),own={};
  all.forEach(c=>{(own[c.set]=own[c.set]||[]).push(c)});
  const L=sets.filter(x=>!SUBIDS.has(nid(x.id))),fs=window._df||'';
@@ -1088,12 +1088,22 @@ function dex(tabs,all){
   g.innerHTML=lst.map(n=>by[n]?cardHTML(by[n]):`<div class="slot"><span>${esc(n)}</span></div>`).join('')+mine.filter(c=>!used.has(String(c.num))).map(cardHTML).join('');
   const h=sec.querySelector('.dxh small');if(h)h.textContent=(own[so.id]||[]).length+' / '+(tot(so)+lst.length)+' cartes';
  };
- $('#cl').innerHTML=(fs?L.filter(x=>x.id===fs):L).map(so=>`<section class="dxs" data-id="${esc(so.id)}"><button class="dxh" aria-expanded="false" style="--h:${hue(so.id)}"><span class="lg">${logoOf(so)}</span><small>${(own[so.id]||[]).length} / ${tot(so)} cartes</small><i class="chev">▾</i></button><div class="dxb"></div></section>`).join('');
+ $('#cl').innerHTML=(fs?L.filter(x=>x.id===fs):L).map(so=>`<section class="dxs" data-id="${esc(so.id)}"><button class="dxh" aria-expanded="false" style="--h:${hue(so.id)}"><span class="lg">${logoOf(so)}</span><small>${full?'toutes les cartes':(own[so.id]||[]).length+' / '+tot(so)+' cartes'}</small><i class="chev">▾</i></button><div class="dxb"></div></section>`).join('');
  lazyLogos($('#cl'));
  const toggle=(sec,force)=>{const so=L.find(x=>x.id===sec.dataset.id),b=sec.querySelector('.dxb'),h=sec.querySelector('.dxh');
   const on=force!==undefined?force:!sec.classList.contains('open');
   sec.classList.toggle('open',on);h.setAttribute('aria-expanded',on);
-  if(on){open.add(so.id);if(!b.innerHTML){b.innerHTML=body(so);loadSub(so,sec)}}else open.delete(so.id)};
+  if(on){open.add(so.id);if(!b.innerHTML){
+    if(full){b.innerHTML='<div class="msg">Chargement de toutes les cartes…</div><div class="prog"><i class="pbx"></i></div>';
+     loadSet(so.id,p=>{const e=b.querySelector('.pbx');if(e)e.style.width=p*100+'%'}).then(d=>{
+      const nn=c=>{const m=/^(\D*)(\d+)/.exec(String(c.num));return m?[m[1],parseInt(m[2],10)]:[String(c.num),0]};
+      const cs=[...d.cards].sort((a,b)=>{const x=nn(a),y=nn(b);return x[0]===y[0]?x[1]-y[1]:(x[0]<y[0]?-1:1)});
+      const tc=window._tc||(window._tc={});
+      cs.forEach(c=>{const v={...c,lang,set:so.id,n:1};v.t=effT(v);tc[lang+':'+c.id]=v});
+      b.innerHTML=`<div class="grid dxg">${cs.map(c=>cardHTML(tc[lang+':'+c.id])).join('')}</div>`;
+      const h=sec.querySelector('.dxh small');if(h)h.textContent=cs.length+' cartes';
+     }).catch(()=>{b.innerHTML='<div class="msg">Impossible de charger cette extension.</div>'})
+    }else{b.innerHTML=body(so);loadSub(so,sec)}}}else open.delete(so.id)};
  $('#cl').querySelectorAll('.dxs').forEach(sec=>{sec.querySelector('.dxh').onclick=()=>toggle(sec);if(open.has(sec.dataset.id))toggle(sec,true)});
  if(fs){const sec=$('#cl').querySelector('.dxs');if(sec)sec.scrollIntoView({block:'start'})}
 }
@@ -1118,10 +1128,10 @@ function collection(){
  if(!window._rfd){window._rfd=1;refreshRarities()}
  setTimeout(()=>{const cl=$('#cl');if(cl)cl.onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...cl.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)}},0);
  const m=$('#m'),all=Object.values(S.cards).filter(c=>c.lang===lang);
- const tabs=`<div class="seg"><button data-v="mine"${(window._cv||'mine')==='mine'?' class="on"':''}>Mes cartes</button><button data-v="dex"${window._cv==='dex'?' class="on"':''}>Pokédex</button></div>`;
+ const tabs=`<div class="seg"><button data-v="mine"${(window._cv||'mine')==='mine'?' class="on"':''}>Mes cartes</button><button data-v="dex"${window._cv==='dex'?' class="on"':''}>Pokédex</button><button data-v="all"${window._cv==='all'?' class="on"':''}>Tout (test)</button></div>`;
  const bindTabs=()=>m.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{window._cv=b.dataset.v;collection()});
  all.forEach(c=>{c.t=effT(c)});
- if(window._cv==='dex'){dex(tabs,all);bindTabs();return}
+ if(window._cv==='dex'||window._cv==='all'){dex(tabs,all,window._cv==='all');bindTabs();return}
  if(!all.length){m.innerHTML=tabs+'<div class="msg">Aucune carte pour l’instant. Ouvre un booster dans l’onglet Boosters.</div>';bindTabs();return}
  const sort=window._sort||'set',fs=window._fs||'';
  const ids=[...new Set(all.map(c=>c.set))];
