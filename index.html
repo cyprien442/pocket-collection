@@ -394,10 +394,16 @@ $('#acc').onclick=async()=>{
 };
 const j=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
 const nameFloor=n=>/(^|[\s-])(v|vmax|vstar|gx|ex)(\s|$)/i.test(String(n||''))?4:0;
+// énergie de base : le nom ne contient que « énergie / energy / de base / basic » et un type
+function isBasicEnergy(c){
+ const nm=String(c.name||''),cg=String(c.category||'');
+ const left=nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(energie|energy|de base|basic|basique|base)\b/g,' ').replace(/\b(plante|feu|eau|electrique|psy|combat|obscurite|metal|fee|incolore|grass|fire|water|lightning|psychic|fighting|darkness|fairy|colorless)\b/g,'#').replace(/[^#a-z0-9]/g,'');
+ if(/^(energy|energie)$/i.test(cg.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))return /^#$/.test(left)||(/^(normal|basic|basique|base|de base)?$/i.test(String(c.energyType||''))&&left===''&&!/double|special|speciale/i.test(nm));
+ return /^#$/.test(left)&&/(energie|energy)/i.test(nm.normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+}
 function tier(c){
  const nm=String(c.name||''),cg=String(c.category||'');
- if(/^(energy|[ée]nergie)$/i.test(cg)&&(/^(normal|basic|base|de base)?$/i.test(String(c.energyType||''))||/^(basic\s+)?(grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy)\s+energy$/i.test(nm)||/^[ée]nergie\s+(plante|feu|eau|[ée]lectrique|psy|combat|obscurit[ée]|m[ée]tal|f[ée]e)$/i.test(nm)))return 0;
- if(/^(basic\s+)?(grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy)\s+energy$/i.test(nm)||/^[ée]nergie\s+(plante|feu|eau|[ée]lectrique|psy|combat|obscurit[ée]|m[ée]tal|f[ée]e)$/i.test(nm))return 0;
+ if(isBasicEnergy(c))return 0;
  const r=(c.rarity||'none').toLowerCase().trim();
  if(r in EX)return EX[r];
  if(/hyper|secr[eè]t|rainbow|arc-en|gold|dor[eé]e?|ハイパー|シークレット/.test(r))return 8;
@@ -442,7 +448,7 @@ async function pdxCards(set,nums){
  return out;
 }
 async function loadSet(id,prog){
- const k=`rc17:${lang}:${id}`,hit=localStorage.getItem(k);
+ const k=`rc18:${lang}:${id}`,hit=localStorage.getItem(k);
  if(hit)return JSON.parse(hit);
  window._bad=0;
  const grab=async(sid,sub,a,b)=>{
