@@ -448,6 +448,8 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
  background-image:linear-gradient(115deg,transparent 30%,#2c2c2caa 40%,#6a6a6a 50%,#2c2c2caa 60%,transparent 70%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 70% 22%/.7),transparent 45%)}
 .hl.k-holo::after,.hl.k-exh::after{mix-blend-mode:color-dodge;opacity:.8;background:linear-gradient(110deg,transparent 38%,#444 50%,transparent 62%);background-size:320% 100%}
 .hl.k-exh{background-image:linear-gradient(115deg,transparent 36%,#22222299 43%,#444 50%,#22222299 57%,transparent 64%),radial-gradient(circle at var(--mx) var(--my),hsl(var(--hc,215) 70% 18%/.55),transparent 40%)}
+/* étoiles lisibles aussi sur les cartes claires (arc-en-ciel, dresseurs) */
+.stars u{filter:drop-shadow(0 0 1px #7a5a08) drop-shadow(0 0 1px #7a5a08) drop-shadow(0 0 3px #fff)}
 </style>
 </head>
 <body>
@@ -1005,7 +1007,7 @@ function landCards(root){(root||document).querySelectorAll('.card[data-k] img,.d
 let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{tintCards(document);kindCards(document);landCards(document)},250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 const holoHTML=c=>{const k=holoKind(c),t=effT(c),wz=isWiz(c),wh=k==='holo'&&wz;
  const sk=(t>=6&&k!=='amazing')||wh||k==='exh';
- const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=6?STARS(Math.max(t,8)):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
+ const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=5?STARS(Math.max(t,t>=6?8:7)):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
  return `<i class="bd s${t}${wh||k==='exh'?' rad':''}"></i>`+(sk?'<i class="sk"></i>':'')+st+(k==='rev'?GLT():'')+(k?`<i class="hl k-${k}${k==='rev'&&isRvx(c)?' rx':''}${wz?' w1':''}${/l[ée]gende|legend/i.test((c.name||'')+' '+(c.rar||''))?' lg':''}"></i><i class="gr k-${k}"></i>`:'')};
 // la lumière suit le doigt / la souris (et la carte s'incline) ; au repos, tout glisse tout seul
 (()=>{const idle=new WeakMap();
