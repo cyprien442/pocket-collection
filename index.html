@@ -397,6 +397,18 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 .t8 .sw,.fx8 .sw{background:linear-gradient(105deg,transparent 36%,#3a301499 46%,#6a561f 50%,#3a301499 54%,transparent 64%);background-size:300% 100%}
 /* cartes paysage (Légendes, BREAK…) : brillance sur toute la carte */
 .land .hl.k-holo,.land .hl.k-shiny,.land .hl.k-rev{-webkit-mask:none;mask:none;-webkit-mask-composite:initial;mask-composite:initial}
+/* v3c : brillance encore renforcée (rainbow, alternatives, secrètes, gold) */
+.hl.k-fa,.hl.k-tex,.hl.k-gold,.hl.k-rainbow,.hl.k-shinyfa,.hl.k-shiny,.hl.k-amazing{background-size:240% 240%}
+.hl.k-fa{background-image:linear-gradient(115deg,transparent 32%,#383838aa 41%,#686868 50%,#383838aa 59%,transparent 68%),linear-gradient(115deg,transparent 14%,#3a102880 30%,#10303a80 46%,#3a361080 62%,#103a2080 78%,transparent 90%)}
+.hl.k-tex{background-image:linear-gradient(115deg,transparent 31%,#3c3c3cb0 41%,#606060 50%,#3c3c3cb0 59%,transparent 69%),linear-gradient(115deg,transparent 14%,#40104a90 30%,#10404a90 46%,#4a421090 62%,#104a2890 78%,transparent 90%)}
+.hl.k-rainbow,.hl.k-shinyfa{background-image:linear-gradient(115deg,transparent 33%,#404040b0 42%,#767676 50%,#404040b0 59%,transparent 69%),linear-gradient(115deg,transparent 10%,#4a1048b0 26%,#10484ab0 40%,#4a4610b0 54%,#134a20b0 68%,#30104ab0 80%,transparent 92%)}
+.hl.k-gold{background-image:linear-gradient(115deg,transparent 31%,#4a3c1ab0 41%,#7c641c 50%,#4a3c1ab0 59%,transparent 69%),linear-gradient(115deg,transparent 10%,#4a2a0890 30%,#4a3a1090 50%,#3a2a0890 70%,transparent 90%)}
+.hl.k-shiny,.hl.k-amazing{background-image:linear-gradient(115deg,transparent 32%,#3c301ab0 41%,#6c5822 50%,#3c301ab0 59%,transparent 68%),linear-gradient(115deg,transparent 14%,#4a2a0880 32%,#0c3a4a80 48%,#3a104a80 64%,transparent 82%)}
+.hl.k-fa::after,.hl.k-tex::after,.hl.k-gold::after,.hl.k-rainbow::after,.hl.k-shinyfa::after,.hl.k-shiny::after,.hl.k-amazing::after{opacity:.6}
+.gr.k-tex{--go:.5;--gl:.95}.gr.k-gold{--go:.45;--gl:1}.gr.k-rainbow{--go:.5;--gl:1}
+.gr.k-tex::after,.gr.k-gold::after,.gr.k-rainbow::after{filter:brightness(1.3)}
+.sw{background:linear-gradient(105deg,transparent 36%,#30303088 45%,#606060 50%,#30303088 55%,transparent 64%);background-size:300% 100%}
+.t8 .sw,.fx8 .sw{background:linear-gradient(105deg,transparent 34%,#4a3c1a99 45%,#7c641c 50%,#4a3c1a99 55%,transparent 66%);background-size:300% 100%}
 </style>
 </head>
 <body>
