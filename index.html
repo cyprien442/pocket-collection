@@ -410,6 +410,17 @@ body.zo #m .card .glt,body.zo #ov .card .glt{visibility:hidden}
 .sw{background:linear-gradient(105deg,transparent 36%,#30303088 45%,#606060 50%,#30303088 55%,transparent 64%);background-size:300% 100%}
 .t8 .sw,.fx8 .sw{background:linear-gradient(105deg,transparent 34%,#4a3c1a99 45%,#7c641c 50%,#4a3c1a99 55%,transparent 66%);background-size:300% 100%}
 .hl.lg{-webkit-mask:none!important;mask:none!important}
+/* rayons de lumière autour des cartes secrètes / gold / alternatives / rainbow agrandies */
+.rays{position:absolute;left:50%;top:50%;width:250%;aspect-ratio:1;translate:-50% -50%;z-index:-1;pointer-events:none;border-radius:50%;
+ -webkit-mask-image:repeating-conic-gradient(#000 0 3deg,transparent 3deg 11deg),radial-gradient(circle,transparent 14%,#000 26%,#0008 46%,transparent 68%);-webkit-mask-composite:source-in;
+ mask-image:repeating-conic-gradient(#000 0 3deg,transparent 3deg 11deg),radial-gradient(circle,transparent 14%,#000 26%,#0008 46%,transparent 68%);mask-composite:intersect;
+ background:conic-gradient(#ffe8a0,#fff6c8,#ffd25a,#fff0b0,#ffe8a0);animation:rsp 38s linear infinite,rpl 2.6s ease-in-out infinite alternate}
+.rays.k-gold{background:conic-gradient(#ffd25a,#fff2b0,#e8a21c,#ffe58a,#ffd25a)}
+.rays.k-rainbow{background:conic-gradient(#ff5fd0,#ffb03f,#fff04a,#5dff7d,#3ff0ff,#7a70ff,#ff5fd0)}
+.rays.k-tex,.rays.k-fa{background:conic-gradient(#fff6d8,#ffe9a8,#ffffff,#ffe9a8,#fff6d8)}
+@keyframes rsp{to{rotate:360deg}}
+@keyframes rpl{from{opacity:.55;scale:.96}to{opacity:.95;scale:1.04}}
+@media (prefers-reduced-motion:reduce){.rays{animation:none;opacity:.7}}
 </style>
 </head>
 <body>
@@ -960,7 +971,7 @@ function kindOf(src){return _kd[src]||(_kd[src]=new Promise(res=>{const go=()=>{
    end(sa>=.3&&gf>=.55&&f[1]>=.25?'gold':sa>=.3&&gf<.45&&(cov>=3||(f[0]>=.1&&f[1]>=.08&&f[3]>=.04))?'rainbow':'tex')}catch(e){end('')}};im.onerror=()=>end('');im.src=src};
   if(_hn<5)go();else _hq.push(go)}))}
 function kindCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.kk)return;const hl=el.querySelector('.bd.s8')&&el.querySelector('.hl.k-tex,.hl.k-gold,.hl.k-rainbow');if(!hl||!/^[^:]*:(?!sv|me)/i.test(el.dataset.k||'x:x'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.kk=1;
- kindOf(im.src).then(k=>{if(!k)return;el.querySelectorAll('.hl,.gr').forEach(x=>{x.className=x.className.replace(/k-(tex|gold|rainbow)/,'k-'+k)})})})}
+ kindOf(im.src).then(k=>{if(!k)return;el.querySelectorAll('.hl,.gr').forEach(x=>{x.className=x.className.replace(/k-(tex|gold|rainbow)/,'k-'+k)});const rs=el.closest('#zs'),ry=rs&&rs.querySelector('.rays');if(ry)ry.className='rays k-'+k})})}
 function landChk(im){try{if(!im||!im.naturalWidth)return;const el=im.closest('.card,.dc>.front');if(el)el.classList.toggle('land',im.naturalWidth>im.naturalHeight*1.05)}catch(e){}}
 document.addEventListener('load',e=>{if(e.target&&e.target.tagName==='IMG')landChk(e.target)},true);
 function landCards(root){(root||document).querySelectorAll('.card[data-k] img,.dc>.front img').forEach(im=>{if(im.complete)landChk(im)})}
@@ -1167,7 +1178,7 @@ function zoomCard(keys,k){
  const draw=()=>{
   const c=S.cards[keys[i]]||(window._tc||{})[keys[i]];if(!c){close();return}
   const t=effT(c),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))"><div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
+  z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="stage deck up${t>=3?' fx'+t:''}" id="zs" style="--bc:var(--b${t});width:min(84vw,430px,calc(62vh*63/88))">${t>=7?`<i class="rays k-${holoKind(c)||'tex'}"></i>`:''}<div class="dk"><div class="dc k0" style="--k:0;--bc:var(--b${t})"><div class="front"><img src="${high(c)}" alt="${esc(c.name)}">${holoHTML(c)}</div></div></div></div><div class="tag" style="color:var(--b${t})">${esc(c.name)} · ${RL(c)} · ×${c.n}</div><div class="zr">${c.num?'N° '+esc(c.num)+' · ':''}Rareté : ${esc(c.rar||'inconnue')}</div><div class="zn"><button class="zp" aria-label="Carte précédente"${i?'':' disabled'}>‹</button><span>${i+1} / ${keys.length}</span><button class="zq" aria-label="Carte suivante"${i<keys.length-1?'':' disabled'}>›</button></div>`;
   const zs=z.querySelector('#zs');let dr=false,tm;
   const mv=e=>{const r=zs.getBoundingClientRect(),x=Math.min(1.2,Math.max(-.2,(e.clientX-r.left)/r.width)),y=Math.min(1.2,Math.max(-.2,(e.clientY-r.top)/r.height));
    zs.style.setProperty('--tx',((x-.5)*70).toFixed(1)+'deg');zs.style.setProperty('--ty',((.5-y)*55).toFixed(1)+'deg');zs.style.setProperty('--mx',(x*100).toFixed(1)+'%');zs.style.setProperty('--my',(y*100).toFixed(1)+'%')};
