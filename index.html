@@ -541,7 +541,7 @@ function tier(c){
  if(/hyper|secr[eè]t|rainbow|arc-en|gold|dor[eé]e?|ハイパー|シークレット/.test(r))return 8;
  if(/gold star|holo star|rare star|\bstar\b|[ée]toile|shining|crystal|cristal/.test(r)&&!/vstar/.test(r))return 8;
  if(/illus|アート/.test(r))return /sp[eé]cia|スペシャル/.test(r)?7:5;
- if(/ultra|shiny|chromatique|ウルトラ|スーパー/.test(r))return 6;
+ if(/ultra|shiny|chromatique|full art|plein[e]? art|ウルトラ|スーパー/.test(r))return 6;
  if(/double|ダブル/.test(r))return 4;
  if(/\b(v|vmax|vstar|gx|ex)\b|break|lv\.x|prime|legend|ace spec|radiant|amazing/.test(r))return 4;
  if(/peu|uncommon|アンコモン/.test(r))return 2;
