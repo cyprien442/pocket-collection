@@ -1434,6 +1434,8 @@ function dex(tabs,all,full){
  const toggle=(sec,force)=>{const so=L.find(x=>x.id===sec.dataset.id),b=sec.querySelector('.dxb'),h=sec.querySelector('.dxh');
   const on=force!==undefined?force:!sec.classList.contains('open');
   sec.classList.toggle('open',on);h.setAttribute('aria-expanded',on);
+  if(on&&window._sio)window._sio.observe(sec);
+  if(on&&sec._html!=null){b.innerHTML=sec._html;sec._html=null;b.style.minHeight=''}
   if(on){open.add(so.id);if(!b.innerHTML){
     if(full){b.innerHTML='<div class="msg">Chargement de toutes les cartes…</div><div class="prog"><i class="pbx"></i></div>';
      lim(()=>loadSet(so.id,p=>{const e=b.querySelector('.pbx');if(e)e.style.width=p*100+'%'})).then(d=>{if(!sec.classList.contains('open'))return;
@@ -1444,8 +1446,13 @@ function dex(tabs,all,full){
       b.innerHTML=`<div class="grid dxg">${cs.map(c=>cardHTML(tc[lang+':'+c.id])).join('')}</div>`;
       const h=sec.querySelector('.dxh small');if(h)h.textContent=cs.length+' cartes';
      }).catch(()=>{b.innerHTML='<div class="msg">Impossible de charger cette extension.</div>'})
-    }else{b.innerHTML=body(so);lim(()=>loadSub(so,sec))}}}else{open.delete(so.id);b.innerHTML=''}};
+    }else{b.innerHTML=body(so);lim(()=>loadSub(so,sec))}}}else{open.delete(so.id);sec._html=null;b.style.minHeight='';b.innerHTML='';if(window._sio)window._sio.unobserve(sec)}};
  window._dxt=toggle;
+ // virtualisation : une extension déployée mais loin de l'écran est vidée de la page (hauteur conservée) puis recréée au retour
+ if(window._sio)window._sio.disconnect();
+ try{window._sio=new IntersectionObserver(es=>es.forEach(en=>{const sec=en.target,b=sec.querySelector('.dxb');if(!b||!sec.classList.contains('open'))return;
+  if(en.isIntersecting){if(sec._html!=null){b.innerHTML=sec._html;sec._html=null;b.style.minHeight=''}}
+  else if(sec._html==null&&b.querySelector('.card')){const hh=b.offsetHeight;sec._html=b.innerHTML;b.style.minHeight=hh+'px';b.innerHTML=''}}),{rootMargin:'1600px 0px'})}catch(e){window._sio=null}
  $('#cl').querySelectorAll('.dxs').forEach(sec=>{sec.querySelector('.dxh').onclick=()=>toggle(sec);if(open.has(sec.dataset.id))toggle(sec,true)});
  if(fs){const sec=$('#cl').querySelector('.dxs');if(sec)sec.scrollIntoView({block:'start'})}
 }
