@@ -510,6 +510,7 @@ const persist=()=>localStorage.setItem('pc_save',JSON.stringify(S));
 // Réserve : 10 boosters au départ, puis 1 booster toutes les 9 minutes (1h30 / 10), cumulables
 const PERIOD=9*60000,BATCH=1,MAXB=10;
 const TEST=false; // mode test : boosters illimités (mettre true pour désactiver la réserve)
+if(!S.fullReset1){try{localStorage.setItem('pc_backup_cards',JSON.stringify(S.cards||{}))}catch(e){}S.cards={};S.fullReset1=1;S.stockReset2=1;S.stock={n:MAXB,t:Date.now()};S.ts=Date.now();persist()} // collection remise à zéro (copie de secours locale)
 if(!S.stock||!S.stockReset2){S.stock={n:MAXB,t:Date.now()};S.stockReset2=1;S.ts=Date.now();persist()} // réserve pleine (10/10), minuteur remis à zéro
 function refill(){
  if(S.stock.n>=MAXB){S.stock.n=MAXB;S.stock.t=Date.now();return}
@@ -1024,7 +1025,7 @@ function hueOf(src){return _hue[src]||(_hue[src]=new Promise(res=>{const go=()=>
    if(w<1)return end(215);r/=w;gg/=w;b/=w;const mx=Math.max(r,gg,b),dd=mx-Math.min(r,gg,b);let h=0;if(dd){if(mx===r)h=((gg-b)/dd)%6;else if(mx===gg)h=(b-r)/dd+2;else h=(r-gg)/dd+4;h=Math.round(h*60);if(h<0)h+=360}
    end(h)}catch(e){end(215)}};im.onerror=()=>end(215);im.src=src};
   if(_hn<5)go();else _hq.push(go)}))}
-function tintCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.hc)return;
+function tintCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.hc)return;if(el.dataset.lz&&!el.classList.contains('live'))return;
  if(!el.querySelector('.hl.k-holo,.hl.k-exh,.hl.k-fa,.hl.k-tex,.hl.k-gold,.sw'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.hc=1;hueOf(im.src).then(h=>el.style.setProperty('--hc',h))})}
 const _kd={};
 function kindOf(src){return _kd[src]||(_kd[src]=new Promise(res=>{const go=()=>{_hn++;const im=new Image();im.crossOrigin='anonymous';const end=k=>{_hn--;res(k);while(_hn<5&&_hq.length)_hq.shift()()};
@@ -1042,12 +1043,18 @@ function kindOf(src){return _kd[src]||(_kd[src]=new Promise(res=>{const go=()=>{
     for(let j=0;j<k;j++)m+=R(ps.slice(Math.floor(j*ps.length/k),Math.floor((j+1)*ps.length/k)).map(z=>z[1]));best=Math.max(best,m/k)}
    end(Rg<=.345&&best-Rg>=.38?'rainbow':'tex')}catch(e){end('')}};im.onerror=()=>end('');im.src=src};
   if(_hn<5)go();else _hq.push(go)}))}
-function kindCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.kk)return;const hl=el.querySelector('.bd.s8')&&el.querySelector('.hl.k-tex,.hl.k-gold,.hl.k-rainbow');if(!hl||!/^[^:]*:(?!sv|me)/i.test(el.dataset.k||'x:x'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.kk=1;
+function kindCards(root){(root||document).querySelectorAll('.card[data-k],.dc>.front').forEach(el=>{if(el.dataset.kk)return;if(el.dataset.lz&&!el.classList.contains('live'))return;const hl=el.querySelector('.bd.s8')&&el.querySelector('.hl.k-tex,.hl.k-gold,.hl.k-rainbow');if(!hl||!/^[^:]*:(?!sv|me)/i.test(el.dataset.k||'x:x'))return;const im=el.querySelector('img');if(!im||!im.src)return;el.dataset.kk=1;
  const clr=()=>{const rs=el.closest('#zs'),ry=rs&&rs.querySelector('.rays');if(ry)ry.classList.remove('pend')};setTimeout(clr,2500);kindOf(im.src).then(k=>{if(!k){clr();return}el.querySelectorAll('.hl,.gr').forEach(x=>{x.className=x.className.replace(/k-(tex|gold|rainbow)/,'k-'+k)});const rs=el.closest('#zs'),ry=rs&&rs.querySelector('.rays');if(ry)ry.className='rays k-'+k})})}
 function landChk(im){try{if(!im||!im.naturalWidth)return;const el=im.closest('.card,.dc>.front');if(el)el.classList.toggle('land',im.naturalWidth>im.naturalHeight*1.05)}catch(e){}}
 document.addEventListener('load',e=>{if(e.target&&e.target.tagName==='IMG')landChk(e.target)},true);
 function landCards(root){(root||document).querySelectorAll('.card[data-k] img,.dc>.front img').forEach(im=>{if(im.complete)landChk(im)})}
-let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{tintCards(document);kindCards(document);landCards(document)},250)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
+// effets des grilles : créés seulement pour les cartes visibles à l'écran (évite de planter le téléphone sur les grosses extensions)
+let _fxt;
+function fxOn(el){if(el._fx)return;el._fx=1;el.classList.add('live');const c=S.cards[el.dataset.k]||(window._tc||{})[el.dataset.k],im=el.querySelector('img');if(c&&im)im.insertAdjacentHTML('afterend',holoHTML(c))}
+function fxOff(el){if(!el._fx)return;el._fx=0;el.classList.remove('live');el.querySelectorAll(':scope>i,:scope>b').forEach(x=>x.remove());delete el.dataset.hc;delete el.dataset.kk}
+let _fio=null;try{if('IntersectionObserver' in window)_fio=new IntersectionObserver(es=>{es.forEach(en=>en.isIntersecting?fxOn(en.target):fxOff(en.target));clearTimeout(_fxt);_fxt=setTimeout(()=>{tintCards(document);kindCards(document)},120)},{rootMargin:'200px 0px'})}catch(e){}
+function watchCards(){document.querySelectorAll('.card[data-lz]:not([data-w])').forEach(el=>{el.dataset.w=1;if(_fio)_fio.observe(el);else fxOn(el)})}
+let _tt;try{new MutationObserver(()=>{clearTimeout(_tt);_tt=setTimeout(()=>{watchCards();tintCards(document);kindCards(document);landCards(document)},120)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 const holoHTML=c=>{const k=holoKind(c),t=effT(c),wz=isWiz(c),wh=k==='holo'&&wz;
  const sk=(t>=6&&k!=='amazing')||wh||k==='exh';
  const st=k==='shiny'||wh?STARSW():k==='exh'?STARSN(11,8):t>=5?STARS(Math.max(t,t>=6?8:7)):(k==='fa'&&t>=5?STARSN(7,7):k==='fa'?STARSN(4,7):'');
@@ -1355,14 +1362,14 @@ function zoomCard(keys,k){
  draw();
 }
 
-const cardHTML=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${esc(c.name)}" loading="lazy">${holoHTML(c)}<span class="n">×${c.n}</span></div>`;
+const cardHTML=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}" data-lz="1"><img src="${low(c)}" alt="${esc(c.name)}" loading="lazy"><span class="n">×${c.n}</span></div>`;
 function dex(tabs,all,full){
  const m=$('#m'),own={};
  all.forEach(c=>{(own[c.set]=own[c.set]||[]).push(c)});
  const L=sets.filter(x=>!SUBIDS.has(nid(x.id))),fs=window._df||'';
  const open=window._dxo||(window._dxo=new Set());
  if(fs)open.add(fs);
- m.innerHTML=tabs+`<div class="bar"><input id="dq" type="search" placeholder="Rechercher une extension" value="'+esc(window._dq||'')+'" autocomplete="off"><select id="df"><option value="">Toutes les extensions</option>${L.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button id="dxa">Tout replier</button></div><div id="cl"></div>`;
+ m.innerHTML=tabs+`<div class="bar"><input id="dq" type="search" placeholder="Rechercher une extension" value="${esc(window._dq||'')}" autocomplete="off"><select id="df"><option value="">Toutes les extensions</option>${L.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button id="dxa">Tout replier</button></div><div id="cl"></div>`;
  $('#df').value=fs;$('#df').onchange=e=>{window._df=e.target.value;collection()};
  $('#dxa').onclick=()=>{open.clear();window._df='';collection()};
  if(!L.length){$('#cl').innerHTML='<div class="msg">Chargement des extensions…</div>';return}
@@ -1435,7 +1442,7 @@ function collection(){
  m.innerHTML=tabs+`<div class="bar"><input id="mq" type="search" placeholder="Rechercher une extension" value="${esc(window._mq||'')}" autocomplete="off"><select id="so"><option value="set">Trier par extension</option><option value="rar">Trier par rareté</option><option value="alpha">Trier par ordre alphabétique</option></select><select id="fs"><option value="">Toutes les extensions</option>${ids.map(i=>`<option value="${i}">${S.sets[lang+':'+i].name}</option>`).join('')}</select></div><div id="cl"></div>`;
  bindTabs();$('#so').value=sort;$('#fs').value=fs;
  $('#so').onchange=e=>{window._sort=e.target.value;collection()};$('#fs').onchange=e=>{window._fs=e.target.value;collection()};
- const card=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}"><img src="${low(c)}" alt="${c.name}" loading="lazy">${holoHTML(c)}<span class="n">×${c.n}</span></div>`;
+ const card=c=>`<div class="card t${effT(c)}" data-k="${lang}:${c.id}" data-lz="1"><img src="${low(c)}" alt="${c.name}" loading="lazy"><span class="n">×${c.n}</span></div>`;
  const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  const paint=()=>{const v=nz(window._mq);let cs=(fs?all.filter(c=>c.set===fs):all).filter(c=>!v||nz((S.sets[lang+':'+c.set]||{}).name).includes(v)||nz(c.set).includes(v));
  if(!cs.length){$('#cl').innerHTML='<div class="msg">Aucune extension trouvée.</div>';return}
