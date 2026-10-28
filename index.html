@@ -1245,7 +1245,7 @@ function dex(tabs,all,full){
  const L=sets.filter(x=>!SUBIDS.has(nid(x.id))),fs=window._df||'';
  const open=window._dxo||(window._dxo=new Set());
  if(fs)open.add(fs);
- m.innerHTML=tabs+`<div class="bar"><select id="df"><option value="">Toutes les extensions</option>${L.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button id="dxa">Tout replier</button></div><div id="cl"></div>`;
+ m.innerHTML=tabs+`<div class="bar"><input id="dq" type="search" placeholder="Rechercher une extension" value="'+esc(window._dq||'')+'" autocomplete="off"><select id="df"><option value="">Toutes les extensions</option>${L.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button id="dxa">Tout replier</button></div><div id="cl"></div>`;
  $('#df').value=fs;$('#df').onchange=e=>{window._df=e.target.value;collection()};
  $('#dxa').onclick=()=>{open.clear();window._df='';collection()};
  if(!L.length){$('#cl').innerHTML='<div class="msg">Chargement des extensions…</div>';return}
@@ -1266,6 +1266,10 @@ function dex(tabs,all,full){
  };
  $('#cl').innerHTML=(fs?L.filter(x=>x.id===fs):L).map(so=>`<section class="dxs" data-id="${esc(so.id)}"><button class="dxh" aria-expanded="false" style="--h:${hue(so.id)}"><span class="lg">${logoOf(so)}</span><small>${full?'toutes les cartes':(own[so.id]||[]).length+' / '+tot(so)+' cartes'}</small><i class="chev">▾</i></button><div class="dxb"></div></section>`).join('');
  lazyLogos($('#cl'));
+ const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const filt=()=>{const v=nz(window._dq);let n=0;$('#cl').querySelectorAll('.dxs').forEach(sec=>{const so=L.find(x=>x.id===sec.dataset.id),ok=!v||nz(so&&so.name).includes(v)||nz(so&&so.id).includes(v);sec.style.display=ok?'':'none';if(ok)n++});
+  let e=$('#dqe');if(!n){if(!e){e=document.createElement('div');e.id='dqe';e.className='msg';e.textContent='Aucune extension trouvée.';$('#cl').appendChild(e)}}else if(e)e.remove()};
+ $('#dq').oninput=e=>{window._dq=e.target.value;filt()};filt();
  const toggle=(sec,force)=>{const so=L.find(x=>x.id===sec.dataset.id),b=sec.querySelector('.dxb'),h=sec.querySelector('.dxh');
   const on=force!==undefined?force:!sec.classList.contains('open');
   sec.classList.toggle('open',on);h.setAttribute('aria-expanded',on);
