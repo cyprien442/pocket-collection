@@ -48,7 +48,7 @@ h2 span{color:var(--mut);font-weight:400;font-size:14px;margin-left:8px}
 .flip{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
 .flip.up{transform:rotateY(180deg)}
 .flip>div{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden}
-.back{background:radial-gradient(circle at 50% 50%,#fff 0 12%,#222 12% 15%,transparent 15%),linear-gradient(180deg,var(--acc) 0 48%,#222 48% 52%,#f5f5f5 52%)}
+.back{background:url(back.png) center/100% 100% no-repeat,radial-gradient(circle at 50% 50%,#fff 0 12%,#222 12% 15%,transparent 15%),linear-gradient(180deg,var(--acc) 0 48%,#222 48% 52%,#f5f5f5 52%)}
 .front{transform:rotateY(180deg);background:var(--panel)}
 .front img{width:100%;height:100%}
 .tag{min-height:26px;font-weight:600}
@@ -1112,19 +1112,30 @@ function fxWav(t){if(_fxw[t])return _fxw[t];
  ws(0,'RIFF');w.setUint32(4,36+len*2,true);ws(8,'WAVE');ws(12,'fmt ');w.setUint32(16,16,true);w.setUint16(20,1,true);w.setUint16(22,1,true);w.setUint32(24,sr,true);w.setUint32(28,sr*2,true);w.setUint16(32,2,true);w.setUint16(34,16,true);ws(36,'data');w.setUint32(40,len*2,true);
  for(let i=0;i<len;i++)w.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]*g))*32767,true);
  return _fxw[t]=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
-const _sfxu={};/* v2 */
+const _sfxu={};/* v3 */
 function sfxUrl(name){if(_sfxu[name])return _sfxu[name];
- const sr=22050,D={tear:.95,swipe:.34,flip:.2}[name],len=Math.floor(sr*D),d=new Float32Array(len);let lp=0,lp2=0,ph=0;
- for(let i=0;i<len;i++){const x=i/sr,n=Math.random()*2-1;let v=0;
-  if(name==='tear'){lp+=.25*(n-lp);const hp=n-lp,jit=.5+.5*Math.abs(Math.sin(x*260+Math.sin(x*35)*3));
-   const rip=x<.45?hp*Math.min(1,x/.02)*Math.pow(1-x/.45,.7)*jit*1.1:0;
-   ph=ph*.8+(Math.random()<.12?(Math.random()*2-1)*1.6:0);
-   v=rip+ph*.7*Math.exp(-x*3.2)+Math.sin(2*Math.PI*220*x)*Math.exp(-x*45)*.5;
-   if(x>.3){lp2+=.1*(n-lp2);v+=lp2*Math.sin(Math.PI*Math.min(1,(x-.3)/.55))*.55}}
-  else if(name==='swipe'){const e=Math.pow(Math.sin(Math.PI*Math.min(1,x/D)),2);lp+=.06*(n-lp);lp2+=.12*(lp-lp2);v=lp2*e*2.2}
-  else{v=Math.sin(2*Math.PI*95*x)*Math.exp(-x*20)*.8+(n-lp)*Math.exp(-x*140)*.15;lp+=.2*(n-lp)}
-  d[i]=v}
- let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));const g=.9/(pk||1);
+ const sr=32000,D={tear:1.25,swipe:.3,flip:.22,star:1.1}[name],len=Math.floor(sr*D),d=new Float32Array(len);
+ const R=Math.random;let a=0,b=0,c=0;
+ if(name==='tear'){
+  // pochette qui se déchire : bruit déchiré + craquements de papier aluminium
+  for(let i=0;i<len;i++){const x=i/sr,n=R()*2-1;a+=.55*(n-a);const hp=n-a; // aigus
+   const env=x<.55?Math.min(1,x/.012)*Math.pow(1-x/.55,.6):0,grain=(.45+.55*Math.abs(Math.sin(x*170+Math.sin(x*23)*4)));
+   d[i]=hp*env*grain*.9}
+  for(let k=0;k<260;k++){const t0=R()<.65?R()*.55:.55+R()*.65,amp=(.25+R()*.75)*Math.exp(-t0*2.2),L=Math.floor(sr*(.002+R()*.007)),s0=Math.floor(t0*sr),f=.3+R()*.6;let y=0;
+   for(let q=0;q<L&&s0+q<len;q++){const n=R()*2-1;y+=f*(n-y);d[s0+q]+=(n-y)*amp*Math.pow(1-q/L,2)*1.4}}
+ }else if(name==='swipe'){
+  // frottement de carte : bruit médium filtré, qui glisse
+  for(let i=0;i<len;i++){const x=i/sr,n=R()*2-1,e=Math.pow(Math.sin(Math.PI*Math.min(1,x/D)),1.4),f=.10+.16*(x/D);
+   a+=f*(n-a);b+=f*(a-b);const bp=a-b;d[i]=bp*e*(.7+.3*Math.sin(x*1400))*5}
+ }else if(name==='flip'){
+  for(let i=0;i<len;i++){const x=i/sr,n=R()*2-1;a+=.2*(n-a);b+=.2*(a-b);
+   d[i]=Math.sin(2*Math.PI*110*x)*Math.exp(-x*26)*.7+(a-b)*Math.sin(Math.PI*Math.min(1,x/.2))*2.2}
+ }else{
+  // étoile : petites notes cristallines qui montent
+  const N=[2093,2637,3136,3951,5274];
+  N.forEach((fq,k)=>{const t0=k*.07;for(let i=Math.floor(t0*sr);i<len;i++){const y=i/sr-t0;d[i]+=(Math.sin(2*Math.PI*fq*y)+.4*Math.sin(2*Math.PI*fq*2.01*y)+.25*Math.sin(2*Math.PI*fq*3.02*y))*Math.min(1,y/.004)*Math.exp(-y*(4.5+k*.6))*.55}})
+ }
+ let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));const g=.95/(pk||1);
  const buf=new ArrayBuffer(44+len*2),w=new DataView(buf),ws=(o,t)=>{for(let i=0;i<t.length;i++)w.setUint8(o+i,t.charCodeAt(i))};
  ws(0,'RIFF');w.setUint32(4,36+len*2,true);ws(8,'WAVE');ws(12,'fmt ');w.setUint32(16,16,true);w.setUint16(20,1,true);w.setUint16(22,1,true);w.setUint32(24,sr,true);w.setUint32(28,sr*2,true);w.setUint16(32,2,true);w.setUint16(34,16,true);ws(36,'data');w.setUint32(40,len*2,true);
  for(let i=0;i<len;i++)w.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]*g))*32767,true);
@@ -1202,7 +1213,7 @@ function revealFx(t,st){
   if(t>=7&&k%3===0)p.style.background=['#ff6ad5','#6af0ff','#fff59a','#7affa0'][k%4];
   L.appendChild(p)}
  st.appendChild(L);setTimeout(()=>L.remove(),3300);
- if(t>=6){ultraFx(t,st);fxSound(t)}
+ if(t>=6){ultraFx(t,st);fxSound(t);setTimeout(()=>sfx('star',.9),450)}else if(t>=4)sfx('star',.85)
 }
 function packFail(img){const w=img.closest('.pk3d'),s=sets.find(x=>x.id===w.dataset.id)||{id:w.dataset.id,name:''};img.parentNode.innerHTML=genPackHTML(s,+w.dataset.v)}
 // inclinaison 3D au doigt / à la souris
@@ -1324,8 +1335,8 @@ async function openPack(id,idx,v=0,art=''){
   const ctn=$('#ct');if(ctn)ctn.onclick=e=>{e.stopPropagation();const tr=pack.tr,tx=pack.tx,np=tr([...pack.keys()]);const gp=pack.gp;pack=np.map(x=>pack[x]);news=np.map(x=>news[x]);pack.tx=tx;pack.gp=gp;trick=true;pre(0);show()};
   if(up)revealFx(c.t);
   const st=$('#st'),top=st.querySelector('.dc.k0');let busy=false;
-  const next=dir=>{if(busy)return;busy=true;sfx('swipe',.4);top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
-  const flipDeck=async()=>{if(busy)return;busy=true;sfx('flip',.45);const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const next=dir=>{if(busy)return;busy=true;sfx('swipe',.9);top.style.setProperty('--dir',dir);top.classList.add('out');setTimeout(()=>{i++;show()},matchMedia('(prefers-reduced-motion:reduce)').matches?0:380)};
+  const flipDeck=async()=>{if(busy)return;busy=true;sfx('flip',.8);const dk=st.querySelector('.dk'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
    const im=top.querySelector('img');if(im&&!(im.complete&&im.naturalWidth>0)){$('#hn').textContent='Chargement de la carte…';await Promise.race([new Promise(r=>{im.addEventListener('load',r,{once:true});im.addEventListener('error',r,{once:true})}),new Promise(r=>setTimeout(r,4000))])}
    try{if(im&&im.decode)await im.decode()}catch(e){}
    const fin=()=>{up=true;st.classList.add('up');dk.classList.remove('f1');dk.classList.add('f2');$('#tg').innerHTML=tagUp;$('#tg').style.color=`var(--b${c.t})`;$('#hn').textContent='Fais glisser la carte sur le côté';revealFx(c.t,st);busy=false};
