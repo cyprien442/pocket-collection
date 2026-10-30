@@ -516,6 +516,12 @@ body::before,body::after{animation:none!important}
 @keyframes ubeam{0%{opacity:0;transform:scaleY(.3)}18%{opacity:.4}100%{opacity:0;transform:scaleY(1)}}
 #ufx .u-dim{background:radial-gradient(circle at var(--cx) var(--cy),transparent 30%,#000b 90%)}
 .u-rays{-webkit-mask-image:radial-gradient(circle closest-side,transparent 20%,#000 34%,#0008 55%,transparent 80%);mask-image:radial-gradient(circle closest-side,transparent 20%,#000 34%,#0008 55%,transparent 80%)}
+.slot{cursor:pointer}
+.myst{width:min(78vw,380px,calc(60vh*63/88));aspect-ratio:63/88;border-radius:5%/3.6%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;color:#fff;text-align:center;padding:8%;box-sizing:border-box;position:relative;overflow:hidden;
+ background:radial-gradient(circle at 50% 38%,#3a4a8a 0,#1b2450 55%,#0c1230 100%);border:3px solid #ffffff55;box-shadow:0 10px 40px #000c,0 0 36px #6a7dff55 inset}
+.myst::before{content:"";position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 38%,#ffffff10 0 8deg,transparent 8deg 20deg)}
+.myst b{position:relative;font-size:clamp(90px,34vw,190px);line-height:1;font-weight:900;text-shadow:0 0 24px #8fa0ff,0 4px 0 #0008}
+.myst i{position:relative;font-style:normal;font-weight:800;font-size:clamp(18px,6vw,28px);line-height:1.2;text-shadow:0 2px 6px #000}
 </style>
 </head>
 <body>
@@ -1407,6 +1413,12 @@ function list(){
  (()=>{const q=f.filter(([s])=>s.cardCount);const run=async()=>{while(q.length){const [s,i]=q.shift();if(!sl.isConnected)return;const l=await subList(s).catch(()=>null);if(!l||!l.length)continue;const el=sl.querySelector(`.set[data-i="${i}"] small`);if(el)el.textContent=(s.cardCount.total+l.length)+' cartes'}};run();run();run()})();
 }
 
+function mystery(name){
+ const old=document.getElementById('zm');if(old)old.remove();
+ const z=document.createElement('div');z.id='zm';z.setAttribute('role','dialog');z.setAttribute('aria-label','Carte à trouver');document.body.appendChild(z);document.body.classList.add('zo');
+ const close=()=>{document.body.classList.remove('zo');z.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',kd);
+ z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="myst"><b>?</b><i>${esc(name)}</i></div><div class="tag" style="color:var(--mut)">Carte à trouver</div>`;
+ z.querySelector('.zx').onclick=close;z.onclick=e=>{if(e.target===z)close()}}
 function zoomCard(keys,k){
  let i=Math.max(0,keys.indexOf(k));
  const old=document.getElementById('zm');if(old)old.remove();
@@ -1516,7 +1528,7 @@ async function refreshRarities(){
 }
 function collection(){
  if(!window._rfd){window._rfd=1;refreshRarities()}
- setTimeout(()=>{const cl=$('#cl');if(cl)cl.onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...cl.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k)}},0);
+ setTimeout(()=>{const cl=$('#cl');if(cl)cl.onclick=e=>{const el=e.target.closest('.card[data-k]');if(el)zoomCard([...cl.querySelectorAll('.card[data-k]')].map(x=>x.dataset.k),el.dataset.k);else{const sl=e.target.closest('.slot');if(sl)mystery(sl.textContent)}}},0);
  const m=$('#m'),all=Object.values(S.cards).filter(c=>c.lang===lang);
  const tabs=`<div class="seg"><button data-v="mine"${(window._cv||'mine')==='mine'?' class="on"':''}>Mes cartes</button><button data-v="dex"${window._cv==='dex'?' class="on"':''}>Pokédex</button><button data-v="all"${window._cv==='all'?' class="on"':''}>Tout (test)</button></div>`;
  const bindTabs=()=>m.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{window._cv=b.dataset.v;collection()});
