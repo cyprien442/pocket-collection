@@ -1415,9 +1415,9 @@ function list(){
 
 function mystery(name){
  const old=document.getElementById('zm');if(old)old.remove();
- const z=document.createElement('div');z.id='zm';z.setAttribute('role','dialog');z.setAttribute('aria-label','Carte à trouver');document.body.appendChild(z);document.body.classList.add('zo');
+ const z=document.createElement('div');z.id='zm';z.setAttribute('role','dialog');z.setAttribute('aria-label','Carte mystère');document.body.appendChild(z);document.body.classList.add('zo');
  const close=()=>{document.body.classList.remove('zo');z.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',kd);
- z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="myst"><b>?</b><i>${esc(name)}</i></div><div class="tag" style="color:var(--mut)">Carte à trouver</div>`;
+ z.innerHTML=`<button class="zx" aria-label="Fermer">✕</button><div class="myst"><b>?</b><i>${esc(name)}</i></div>`;
  z.querySelector('.zx').onclick=close;z.onclick=e=>{if(e.target===z)close()}}
 function zoomCard(keys,k){
  let i=Math.max(0,keys.indexOf(k));
