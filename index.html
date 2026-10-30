@@ -512,6 +512,10 @@ body::before,body::after{animation:none!important}
 .u-ring{box-shadow:0 0 10px 2px var(--u)}
 .u-beam{mix-blend-mode:normal}
 .stage.fx6,.stage.fx7,.stage.fx8{animation:shk2 .8s .05s}
+@keyframes urays{0%{opacity:0;transform:rotate(0) scale(.2)}14%{opacity:.5}70%{opacity:.34}100%{opacity:0;transform:rotate(38deg) scale(1)}}
+@keyframes ubeam{0%{opacity:0;transform:scaleY(.3)}18%{opacity:.4}100%{opacity:0;transform:scaleY(1)}}
+#ufx .u-dim{background:radial-gradient(circle at var(--cx) var(--cy),transparent 30%,#000b 90%)}
+.u-rays{-webkit-mask-image:radial-gradient(circle closest-side,transparent 20%,#000 34%,#0008 55%,transparent 80%);mask-image:radial-gradient(circle closest-side,transparent 20%,#000 34%,#0008 55%,transparent 80%)}
 </style>
 </head>
 <body>
