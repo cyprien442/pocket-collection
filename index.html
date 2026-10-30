@@ -48,7 +48,9 @@ h2 span{color:var(--mut);font-weight:400;font-size:14px;margin-left:8px}
 .flip{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
 .flip.up{transform:rotateY(180deg)}
 .flip>div{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden}
-.back{background:url(back.png) center/100% 100% no-repeat,radial-gradient(circle at 50% 50%,#fff 0 12%,#222 12% 15%,transparent 15%),linear-gradient(180deg,var(--acc) 0 48%,#222 48% 52%,#f5f5f5 52%)}
+:root{--bk:url(back.png)}
+:root[data-l=ja]{--bk:url(back-ja.png)}
+.back{background:var(--bk) center/100% 100% no-repeat!important;border-radius:0}
 .front{transform:rotateY(180deg);background:var(--panel)}
 .front img{width:100%;height:100%}
 .tag{min-height:26px;font-weight:600}
@@ -211,7 +213,7 @@ header{background:#0d1322cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:b
 .dc{position:absolute;inset:0;border-radius:14px;z-index:calc(9 - var(--k));transform:translate(calc(var(--k)*5px),calc(var(--k)*-4px));box-shadow:0 3px 10px #0009;touch-action:none}
 .dc>.back,.dc>.front{transform:none;position:absolute;inset:0;border-radius:14px;overflow:hidden}
 .dc>.front img{width:100%;height:100%;display:block}
-.dc>.back{border:2px solid #fff4}
+.dc>.back{border:0}
 .deck:not(.up) .dc>.front,.deck.up .dc>.back{display:none}
 .deck.up .dc.k0{transform:perspective(900px) rotateY(var(--tx)) rotateX(var(--ty))}
 .dc.k0.out{transition:transform .38s ease-in,opacity .38s;transform:translateX(calc(var(--dir)*135%)) rotate(calc(var(--dir)*16deg))!important;opacity:0}
@@ -529,7 +531,7 @@ const API='https://api.tcgdex.net/v2',$=s=>document.querySelector(s),pick=a=>a[M
 const TN=['Énergie','Commune','Peu commune','Rare','Double rare','Illustration rare','Ultra rare','Illustration spéciale','Hyper rare'];
 const EX={c:1,u:2,r:3,rr:4,rrr:5,ar:5,sr:6,sar:7,ur:8,hr:8,none:1};
 Object.keys(localStorage).filter(k=>/^(rc[2]?|wk[1234]):/.test(k)).forEach(k=>localStorage.removeItem(k));
-let lang=localStorage.getItem('pc_lang')||'fr',view='b',sets=[],q='';
+let lang=localStorage.getItem('pc_lang')||'fr',view='b',sets=[],q='';document.documentElement.dataset.l=lang;
 let S=JSON.parse(localStorage.getItem('pc_save')||'{"cards":{},"sets":{}}');
 const persist=()=>{const v=JSON.stringify(S);try{localStorage.setItem('pc_save',v)}catch(e){try{Object.keys(localStorage).filter(x=>x.startsWith('rc21:')||x.startsWith('fw3:')).forEach(x=>localStorage.removeItem(x));localStorage.setItem('pc_save',v)}catch(e2){}}};
 // Réserve : 10 boosters au départ, puis 1 booster toutes les 9 minutes (1h30 / 10), cumulables
@@ -1574,7 +1576,7 @@ async function scanSets(){
   }}}finally{scanning=false}
 }
 $('#tb').onclick=()=>{view='b';render();list()};$('#tc').onclick=()=>{view='c';render()};
-$('#lang').onchange=e=>{lang=e.target.value;localStorage.setItem('pc_lang',lang);init();setTimeout(scanSets,6000)};
+$('#lang').onchange=e=>{lang=e.target.value;document.documentElement.dataset.l=lang;localStorage.setItem('pc_lang',lang);init();setTimeout(scanSets,6000)};
 tick();init();authInit();setTimeout(scanSets,6000);
 </script>
 </body>
