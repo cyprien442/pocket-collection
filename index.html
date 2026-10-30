@@ -503,6 +503,13 @@ body::before,body::after{animation:none!important}
 .grid .card.anim .bd,.grid .card.anim .sk{animation-duration:6s,3s!important}
 #asf{position:fixed;right:14px;bottom:72px;z-index:26;width:46px;height:46px;border-radius:50%;border:1px solid #ffffff40;background:#3b2a8ce6;color:#fff;font-size:18px;line-height:1;box-shadow:0 4px 16px #000a;cursor:pointer}
 #asf[hidden]{display:none}
+/* ===== allègement de l'animation ultra rare (mémoire du téléphone) ===== */
+.u-rays{width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;mix-blend-mode:normal;will-change:auto;-webkit-mask-image:radial-gradient(circle closest-side,transparent 16%,#000 28%,#0008 50%,transparent 80%);mask-image:radial-gradient(circle closest-side,transparent 16%,#000 28%,#0008 50%,transparent 80%)}
+@keyframes uflash{0%{transform:scale(.2);opacity:1}60%{opacity:.9}100%{transform:scale(22);opacity:0}}
+@keyframes uring{0%{transform:scale(.3);opacity:1}100%{transform:scale(18);opacity:0}}
+.u-ring{box-shadow:0 0 10px 2px var(--u)}
+.u-beam{mix-blend-mode:normal}
+.stage.fx6,.stage.fx7,.stage.fx8{animation:shk2 .8s .05s}
 </style>
 </head>
 <body>
@@ -1171,13 +1178,13 @@ function ultraFx(t,st){
  const o=document.createElement('div');o.id='ufx';o.className='u'+t;o.style.cssText=`--u:${main};--cx:${cx}px;--cy:${cy}px`;
  o.innerHTML='<i class="u-dim"></i><i class="u-rays"></i><i class="u-beam"></i><i class="u-ring"></i><i class="u-ring r2"></i><i class="u-ring r3"></i><i class="u-flash"></i><canvas class="u-cv"></canvas><b class="u-txt">'+(TN[t]||'')+'</b>';
  document.body.appendChild(o);
- const cv=o.querySelector('.u-cv'),dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
- const N=t>=8?260:t===7?210:160,P=[];
+ const cv=o.querySelector('.u-cv'),dpr=1,W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);
+ const N=t>=8?130:t===7?110:90,P=[];
  const add=(x,y,vx,vy,k)=>P.push({x,y,vx,vy,l:1,d:.006+Math.random()*.011,s:1.4+Math.random()*(k>.78?4.2:2.2),c:pal[P.length%pal.length],sh:k>.72,rot:Math.random()*6,vr:(Math.random()-.5)*.35});
  for(let i=0;i<N;i++){const a=Math.random()*6.283,v=(t>=8?10:8)*(.3+Math.random());add(cx,cy,Math.cos(a)*v,Math.sin(a)*v-1.5,Math.random())}
  const T0=performance.now();
  const step=()=>{if(!o.isConnected)return;const el=performance.now()-T0;
-  if(t>=7&&el<1800&&Math.random()<.7)add(Math.random()*W,-10,(Math.random()-.5)*1.2,2+Math.random()*3,Math.random());
+  if(t>=7&&el<1800&&Math.random()<.35)add(Math.random()*W,-10,(Math.random()-.5)*1.2,2+Math.random()*3,Math.random());
   g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);g.globalCompositeOperation='lighter';
   P.forEach(p=>{p.vx*=.985;p.vy=p.vy*.985+.13;p.x+=p.vx;p.y+=p.vy;p.l-=p.d;p.rot+=p.vr;if(p.l<=0)return;g.globalAlpha=Math.max(0,Math.min(1,p.l*1.5));g.fillStyle=p.c;
    if(p.sh){g.save();g.translate(p.x,p.y);g.rotate(p.rot);const q=p.s*2.4;g.beginPath();g.moveTo(0,-q);g.quadraticCurveTo(0,0,q,0);g.quadraticCurveTo(0,0,0,q);g.quadraticCurveTo(0,0,-q,0);g.quadraticCurveTo(0,0,0,-q);g.fill();g.restore()}
